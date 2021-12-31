@@ -147,8 +147,8 @@ def q_for_exit(key):
     if key in ('q', 'Q'):
         exit_program()
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # Build primary two subdivisions: tab_menu and body_container
     tab_menu = build_tab_menu(['Todo', 'Jobs', 'Companies', 'Contacts'])
     body_container = urwid.Filler(urwid.Text("default", 'left', 'clip'), "top")
@@ -158,6 +158,6 @@ if __name__ == "__main__":
 
     mainloop = urwid.MainLoop(main_pile,
                               palette=[('reversed', 'standout', '')],
-                              unhandled_input=q_for_exit(None))
+                              unhandled_input=q_for_exit)
 
     mainloop.run()
