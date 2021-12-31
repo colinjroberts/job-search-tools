@@ -130,5 +130,5 @@ dmypy.json
 
 # Pycharm
 .idea/
-.image-examples/
-.data/
+image-examples/
+data/
