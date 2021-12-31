@@ -58,6 +58,8 @@ For now, the companies(), contacts(), and jobs() functions read in csvs of text 
 as urwid Text objects. Later, these will likely become calls to whatever backend is used...SQLite 
 probably?
 """
+
+
 def companies():
     company_names = []
     with open('data/companies.csv') as csvfile:
@@ -73,6 +75,7 @@ def companies():
 
     return urwid.Text(company_names)
 
+
 def contacts():
     contact_names = []
     with open('data/contacts.csv') as csvfile:
@@ -87,6 +90,7 @@ def contacts():
                 reading = False
 
     return urwid.Text(contact_names)
+
 
 def jobs():
     job_names = []
@@ -116,18 +120,63 @@ def build_tab_menu(choices):
     return urwid.GridFlow(cells, 20, 2, 1, "left")
 
 
+def build_body_side_bar(self, choice):
+    """Builds the sidebar of the body depending on which tab is currently active
+
+    :return:
+    """
+
+
+def build_body_main_window(choice):
+    """Builds the main window of the body depending on which tab is currently active
+    The calling method is a Filler, and this will return different Text objects to it
+    :return: Lineboxed urwid object
+    """
+    main_window_text = urwid.Text(f"This will be the main window in which {choice} data will appear", 'center', 'clip')
+    return main_window_text
+
+
+def get_body_container_columns(choice="Todo"):
+    column_1 = urwid.LineBox(urwid.Filler(urwid.Text("column1", 'center', 'clip'), "top"))
+    column_2 = urwid.LineBox(urwid.Filler(build_body_main_window(choice), "top"))
+    return [("weight", 1, column_1), ("weight", 3, column_2)]
+
+
+def build_body_container(choice="Todo"):
+    """Builds the body container"""
+    return urwid.Columns(get_body_container_columns())
+
+
 def body_picker(button, choice):
     """Function for directly changing the text in body_container"""
     if choice == "Todo":
-        body_container.body = urwid.Text("Todo", 'left', 'clip')
+        column_1 = urwid.LineBox(urwid.Filler(urwid.Text("todo items", 'center', 'clip'), "top"))
+        column_2 = urwid.LineBox(urwid.Filler(build_body_main_window(choice), "top"))
+        list_of_widgets_to_return = [(column_1, ("weight", 1, False)), (column_2, ("weight", 3, False))]
+
     elif choice == "Companies":
-        body_container.body = companies()
+        column_1 = urwid.LineBox(urwid.Filler(companies(), "top"))
+        column_2 = urwid.LineBox(urwid.Filler(build_body_main_window(choice), "top"))
+        # body_container.widget_list = build_body_main_window(choice=choice)
+        list_of_widgets_to_return = [(column_1, ("weight", 1, False)), (column_2, ("weight", 3, False))]
+
     elif choice == "Contacts":
-        body_container.body = contacts()
+        column_1 = urwid.LineBox(urwid.Filler(contacts(), "top"))
+        column_2 = urwid.LineBox(urwid.Filler(build_body_main_window(choice), "top"))
+        # body_container.widget_list = build_body_main_window(choice=choice)
+        list_of_widgets_to_return = [(column_1, ("weight", 1, False)), (column_2, ("weight", 3, False))]
+
     elif choice == "Jobs":
-        body_container.body = jobs()
+        column_1 = urwid.LineBox(urwid.Filler(jobs(), "top"))
+        column_2 = urwid.LineBox(urwid.Filler(build_body_main_window(choice), "top"))
+        # body_container.widget_list = build_body_main_window(choice=choice)
+        list_of_widgets_to_return = [(column_1, ("weight", 1, False)), (column_2, ("weight", 3, False))]
+
     else:
-        body_container.body = urwid.Text("There must have been a mistake.", 'left', 'clip')
+        # body_container.body = urwid.Text("There must have been a mistake.", 'left', 'clip')
+        list_of_widgets_to_return = [("pack", urwid.Text("There must have been a mistake.", 'left', 'clip'))]
+
+    body_container.contents = urwid.MonitoredFocusList(list_of_widgets_to_return)
 
 
 def on_tab_click(button, choice):
@@ -151,9 +200,11 @@ def q_for_exit(key):
 if __name__ == "__main__":
     # Build primary two subdivisions: tab_menu and body_container
     tab_menu = build_tab_menu(['Todo', 'Jobs', 'Companies', 'Contacts'])
-    body_container = urwid.Filler(urwid.Text("default", 'left', 'clip'), "top")
+    # body_container = urwid.Filler(urwid.Text("default", 'left', 'clip'), "top")
+    body_container = urwid.Columns(get_body_container_columns())
 
     # Arrange primary items into a Pile
+    # main_pile = urwid.Pile([('pack', tab_menu), body_container])
     main_pile = urwid.Pile([('pack', tab_menu), body_container])
 
     mainloop = urwid.MainLoop(main_pile,
@@ -161,3 +212,4 @@ if __name__ == "__main__":
                               unhandled_input=q_for_exit)
 
     mainloop.run()
+
