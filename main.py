@@ -65,31 +65,27 @@ def companies():
     with open('data/companies.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         fieldnames = next(csvreader)
-
         reading = True
         while reading:
             try:
-                company_names.append(next(csvreader)[1] + "\n")
+                company_names.append(next(csvreader)[1])
             except StopIteration:
                 reading = False
-
-    return urwid.Text(company_names)
+    return company_names
 
 
 def people():
-    contact_names = []
+    people_names = []
     with open('data/contacts.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         fieldnames = next(csvreader)
-
         reading = True
         while reading:
             try:
-                contact_names.append(next(csvreader)[1] + "\n")
+                people_names.append(next(csvreader)[1])
             except StopIteration:
                 reading = False
-
-    return urwid.Text(contact_names)
+    return people_names
 
 
 def jobs():
@@ -97,15 +93,13 @@ def jobs():
     with open('data/jobs.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         fieldnames = next(csvreader)
-
         reading = True
         while reading:
             try:
-                job_names.append(next(csvreader)[2] + "\n")
+                job_names.append(next(csvreader)[2])
             except StopIteration:
                 reading = False
-
-    return urwid.Text(job_names)
+    return job_names
 
 
 def build_tab_menu(choices):
@@ -118,6 +112,53 @@ def build_tab_menu(choices):
         urwid.connect_signal(button, 'click', on_tab_click, item)
         cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
     return urwid.GridFlow(cells, 20, 2, 1, "left")
+
+
+def build_job_status_button_gridflow():
+    """Defines and builds tab_menu using provided choices
+    Probably doesn't need to be this convoluted.
+    """
+    choices = ["Interested", "Applied", "Interviewing", 'Accepted', "Interviewed", "Rejected"]
+    cells = []
+    for item in choices:
+        button = urwid.Button(item)
+        # urwid.connect_signal(button, 'click', on_tab_click, item)
+        cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
+    return urwid.GridFlow(cells, 17, 2, 1, "left")
+
+
+def build_list_of_jobs_for_sidebar(job_list):
+    """Defines and builds sidebar used on Jobs view with list of jobs
+    CLicking on one should show that job's information.
+    """
+    cells = []
+    for item in job_list:
+        button = urwid.Button(item)
+        # urwid.connect_signal(button, 'click', on_tab_click, item)
+        cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
+    return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
+
+def build_list_of_companies_for_sidebar(company_list):
+    """Defines and builds sidebar used on Companies view with list of jobs
+    CLicking on one should show that company's information.
+    """
+    cells = []
+    for item in company_list:
+        button = urwid.Button(item)
+        # urwid.connect_signal(button, 'click', on_tab_click, item)
+        cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
+    return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
+
+def build_list_of_people_for_sidebar(person_list):
+    """Defines and builds sidebar used on Companies view with list of jobs
+    CLicking on one should show that company's information.
+    """
+    cells = []
+    for item in person_list:
+        button = urwid.Button(item)
+        # urwid.connect_signal(button, 'click', on_tab_click, item)
+        cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
+    return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
 
 def build_body_side_bar(self, choice):
     """Builds the sidebar of the body depending on which tab is currently active
@@ -154,12 +195,19 @@ def body_picker(button, choice):
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
     elif choice == "Companies":
-        side_bar = urwid.LineBox(urwid.Filler(companies(), "top"))
+        # Side Bar - Selectable list of companies
+        # Note, buttons need connecting
+        side_bar = urwid.LineBox(build_list_of_jobs_for_sidebar(companies()))
 
+        # Main body top - Open Jobs at selected company
         main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
                                       title="Open Jobs", title_align="left")
-        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"),
+
+        # Main body middle - Notes about selected company
+        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
                                       title="Notes", title_align="left")
+
+        # Main body bottom - People known at selected company
         main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("People", 'center', 'clip'), "top"),
                                       title="People", title_align="left")
         main_body = urwid.Pile([main_body_top, main_body_mid, main_body_bottom])
@@ -167,31 +215,41 @@ def body_picker(button, choice):
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
     elif choice == "People":
-        side_bar = urwid.LineBox(urwid.Filler(people(), "top"))
+        # Side Bar - Selectable list of companies
+        # Note, buttons need connecting
+        side_bar = urwid.LineBox(build_list_of_jobs_for_sidebar(people()))
 
-        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Details", 'center', 'clip'), "top"),
+        # Main body top - Details about the person (probably contact info)
+        main_body_top = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
                                       title="Details", title_align="left")
-        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"),
+
+        # Main body bottom - Notes connected to this person (list sorted by dates)
+        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
                                       title="Notes", title_align="left")
         main_body = urwid.Pile([main_body_top, main_body_bottom])
 
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
     elif choice == "Jobs":
-        side_bar = urwid.LineBox(urwid.Filler(jobs(), "top"))
+        # Side Bar - Selectable list of jobs
+        # Note, buttons need connecting
+        side_bar = urwid.LineBox(build_list_of_jobs_for_sidebar(jobs()))
 
-        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's status",
-                                                              'center', 'clip'), "top"),
+        # Top Box - Job Status
+        main_body_top = urwid.LineBox(urwid.Filler(build_job_status_button_gridflow(), "top"),
                                       title="Status", title_align="left")
-        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's posting details",
-                                                              'center', 'clip'), "top"),
+
+        # Mid Box - Details about the posting
+        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
                                       title="Posting Details", title_align="left")
-        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's notes", 'center', 'clip'), "top"),
-                                      title="Notes", title_align="left")
-        main_body = urwid.Pile([main_body_top, main_body_mid, main_body_bottom])
+
+        # Bottom Box - Notes about the posting
+        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                                         title="Notes", title_align="left")
+
+        main_body = urwid.Pile([main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)])
 
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
-
 
     else:
         list_of_widgets_to_return = [("pack", urwid.Text("There must have been a mistake.", 'left', 'clip'))]
