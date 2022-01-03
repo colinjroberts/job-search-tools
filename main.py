@@ -156,9 +156,12 @@ def body_picker(button, choice):
     elif choice == "Companies":
         side_bar = urwid.LineBox(urwid.Filler(companies(), "top"))
 
-        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"))
-        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"))
-        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("People", 'center', 'clip'), "top"))
+        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
+                                      title="Open Jobs", title_align="left")
+        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"),
+                                      title="Notes", title_align="left")
+        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("People", 'center', 'clip'), "top"),
+                                      title="People", title_align="left")
         main_body = urwid.Pile([main_body_top, main_body_mid, main_body_bottom])
 
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
@@ -166,8 +169,10 @@ def body_picker(button, choice):
     elif choice == "People":
         side_bar = urwid.LineBox(urwid.Filler(people(), "top"))
 
-        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Details", 'center', 'clip'), "top"))
-        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"))
+        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Details", 'center', 'clip'), "top"),
+                                      title="Details", title_align="left")
+        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"),
+                                      title="Notes", title_align="left")
         main_body = urwid.Pile([main_body_top, main_body_bottom])
 
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
@@ -175,9 +180,14 @@ def body_picker(button, choice):
     elif choice == "Jobs":
         side_bar = urwid.LineBox(urwid.Filler(jobs(), "top"))
 
-        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Status", 'center', 'clip'), "top"))
-        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Posting Details", 'center', 'clip'), "top"))
-        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Notes", 'center', 'clip'), "top"))
+        main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's status",
+                                                              'center', 'clip'), "top"),
+                                      title="Status", title_align="left")
+        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's posting details",
+                                                              'center', 'clip'), "top"),
+                                      title="Posting Details", title_align="left")
+        main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text("Here will be a bunch of options about the job's notes", 'center', 'clip'), "top"),
+                                      title="Notes", title_align="left")
         main_body = urwid.Pile([main_body_top, main_body_mid, main_body_bottom])
 
         list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
