@@ -1,10 +1,10 @@
 import sqlite3
 from os import path, mkdir
 import pathlib
+import database
 
 DB_PATH = pathlib.Path("data/")
 DB_FILEPATH = pathlib.Path("data/data.db")
-
 
 def create_new_db(conn):
     """
@@ -375,7 +375,13 @@ def open_db():
 if __name__ == "__main__":
     conn = None
     try:
-        conn = open_db()
+        conn = database.open_db()
+        database.initialize_db(conn)
+
     finally:
         if conn:
+            # data = database.get_all_names_from_table(conn, "todo")
+            # print(data)
+            data = database.get_one_row_from_table_by_name(conn, "todo", "Add SQLite insertions to DB interface")
+            print(data)
             conn.close()

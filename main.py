@@ -57,9 +57,14 @@ import database
 import time
 
 """
-For now, the companies(), people(), and jobs() functions read in csvs of text and return them
-as urwid Text objects. Later, these will likely become calls to whatever backend is used...SQLite 
-probably?
+TODO
+
+- Create button handler that is called when todo side bar item is clicked
+- In todo main body, add retreival of data from database when todo sidebar button pressed
+- In todo layout, add "new todo" to side bar
+- In todo main body, add "complete todo" as a button at the top
+
+
 """
 
 class App():
@@ -92,6 +97,11 @@ class App():
 
     def jobs(self):
         return database.get_all_names_from_table(self.conn, "job")
+
+    def todos(self):
+        return database.get_all_names_from_table(self.conn, "todo")
+
+
 
     def build_tab_menu(self, choices):
         """Defines and builds tab_menu using provided choices
@@ -129,6 +139,7 @@ class App():
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
 
+
     def build_list_of_companies_for_sidebar(self, company_list):
         """Defines and builds sidebar used on Companies view with list of jobs
         CLicking on one should show that company's information.
@@ -151,38 +162,78 @@ class App():
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
 
+    def build_list_of_todos_for_sidebar(self, job_list):
+        """Defines and builds sidebar used on Todos view with list of todos
+        Clicking on one should show that company's information.
+        """
+        cells = []
+        for item in job_list:
+            button = urwid.Button(item)
+            urwid.connect_signal(button, 'click', self.on_todo_item_click, item)
+            cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
+        return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
+
+    def build_main_body(self, identifier):
+        """Defines and builds sidebar used on Companies view with list of jobs
+        CLicking on one should show that company's information.
+
+        todo_id, todo_title, todo_date_modified, todo_description
+        """
+        data = database.get_one_row_from_table_by_name(self.conn, "todo", identifier)
+
+        text_items = []
+        for item in data:
+            text_items.append(str(item) + ": " + str(data[item]))
+
+        return urwid.Text("\n".join(text_items))
+
+
     def build_body_side_bar(self, something, choice):
         """Builds the sidebar of the body depending on which tab is currently active
         :return:
         """
 
-    def build_body_main_window(self, choice):
+    def build_body_main_window(self):
         """Builds the main window of the body depending on which tab is currently active
         The calling method is a Filler, and this will return different Text objects to it
         :return: Lineboxed urwid object
         """
-        main_window_text = urwid.Text(f"This will be the main window in which {choice} data will appear", 'center', 'clip')
+        main_window_text = urwid.Text(f"Choose a tab to get started", 'center', 'clip')
         return urwid.LineBox(urwid.Filler(main_window_text, "top"))
 
 
     # Main screen on first load
     def get_body_container_columns(self, choice="Todo"):
         column_1 = urwid.LineBox(urwid.Filler(urwid.Text("column1", 'center', 'clip'), "top"))
-        column_2 = self.build_body_main_window(choice)
+        column_2 = self.build_body_main_window()
         return [("weight", 1, column_1), ("weight", 3, column_2)]
-
 
     def build_body_container(self, choice="Todo"):
         """Builds the body container"""
         return urwid.Columns(self.get_body_container_columns())
 
 
-    def body_picker(self, button, choice):
+
+
+    def body_picker(self, button, choice, identifier = None):
         """Function for directly changing the text in body_container"""
 
         if choice == "Todo":
             side_bar = urwid.LineBox(urwid.Filler(urwid.Text("todo items", 'center', 'clip'), "top"))
-            main_body = self.build_body_main_window(choice)
+            main_body = self.build_body_main_window()
+            list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
+          # Side Bar - Selectable list of companies
+            # Note, buttons need connecting
+            side_bar = urwid.LineBox(self.build_list_of_todos_for_sidebar(self.todos()))
+
+            # Main body - Displays selected Todos
+            if not identifier:
+                main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todos", 'center', 'clip'), "top"),
+                                              title="Todos", title_align="left")
+            else:
+                main_body = urwid.LineBox(urwid.Filler(self.build_main_body(identifier), "top"),
+                                              title="Todos", title_align="left")
+
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
         elif choice == "Companies":
@@ -255,6 +306,14 @@ class App():
         :return: None. For now, this just calls the body_picker function which directly changes
         """
         self.body_picker(button, choice)
+
+    def on_todo_item_click(self, button, identifier):
+        """Callback function for changing main_body
+        :param button: not sure what this is for, but some first variable is expected
+        :param choice: user variable used for switch
+        :return: None. For now, this just calls the body_picker function which directly changes
+        """
+        self.body_picker(button, "Todo", identifier)
 
 
     def exit_program(self):
