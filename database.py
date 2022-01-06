@@ -307,68 +307,52 @@ def get_one_row_from_table(conn, table, row_id):
 
 
 def get_one_row_from_table_by_name(conn, table, item_name):
-
-    table_data_names = []
+    cursor = None
     if table == "job":
-        db_data_names = """job_id, job_title, job_date_added, 
-                              job_date_posted, job_description, job_status"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM job
                                  WHERE job_title == (?)
-                              """, db_data_names, item_name)
+                              """, item_name)
 
     if table == "company":
-        db_data_names = """company_id, company_name"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM company
                                  WHERE company_name == (?)
-                              """, db_data_names, item_name)
+                              """, item_name)
 
     if table == "note":
-        db_data_names = """note_id, note_title, note_date_added, note_details"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM note
                                  WHERE note_title == (?)
-                              """, db_data_names, item_name)
+                              """, item_name)
 
     if table == "people":
-        db_data_names = """person_id, person_name, person_email, person_phone"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM person
                                  WHERE person_name == (?)
-                              """, db_data_names, [item_name])
+                              """, [item_name])
 
     if table == "todo":
-        db_data_names = """todo_id, todo_title, todo_date_modified, todo_description"""
         cursor = conn.execute("""SELECT *
                                  FROM todo
                                  WHERE todo_title == (?)
                               """, [item_name])
 
     # Extract data from query cursor
-
     data = {}
-    list_of_column_names = [x[0] for x in cursor.description]
-    tuple_of_data = ()
+    if cursor:
+        list_of_column_names = [x[0] for x in cursor.description]
+        tuple_of_data = ()
 
-    for cursor_row in cursor:
-        tuple_of_data = cursor_row
+        for cursor_row in cursor:
+            tuple_of_data = cursor_row
 
-    for i, item in enumerate(list_of_column_names):
-        data[item] = tuple_of_data[i]
-
+        for i, item in enumerate(list_of_column_names):
+            data[item] = tuple_of_data[i]
+    else:
+        data["SQL Result"] = "None"
     return data
 
-    # Extract data from query cursor
-    list_output = []
-    for cursor_row in cursor:
-        list_output.append(cursor_row[0])
-
-    return list_output
 
 def get_all_names_from_table(conn, table):
     """Returns all values from the name/title column of all items in a table"""
@@ -398,6 +382,40 @@ def get_all_names_from_table(conn, table):
         list_output.append(cursor_row[0])
 
     return list_output
+
+def get_related_notes(conn, related_table, related_identifier):
+    name_column = ""
+    cursor = None
+
+    if related_table == "job":
+        note_join_column = "note_job"
+        id_column = "job_id"
+        name_column = "job_title"
+
+    if related_table == "company":
+        note_join_column = "note_company"
+        id_column = "company_id"
+
+    if related_table == "person":
+        note_join_column = "note_person"
+        id_column = "person_id"
+
+    cursor = conn.execute(f"SELECT * FROM note "
+                          f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
+                          f"WHERE {name_column} == (?)", [related_identifier])
+
+    # Extract data from query cursor
+    list_of_notes = []
+    list_output = []
+    list_of_column_names = [x[0] for x in cursor.description]
+    for cursor_row in cursor:
+        data = {}
+        for i, item in enumerate(list_of_column_names):
+            data[item] = cursor_row[i]
+        list_output.append(cursor_row)
+        list_of_notes.append(data)
+
+    return list_of_notes
 
 
 def insert_table_data(conn, table, dict_of_data_to_insert):

@@ -25,11 +25,42 @@ Tools for organizing and performing a job search
 
 ## TODO:
 - Milestone: Build manual version of E2E 1
-  - Sketch a usable design for system using curses with the following screens:
-    - Todo
-    - People
-    - Companies
+  - Establish database lookups for all tabs
     - Jobs
-  - Build tables for people, companies, jobs, notes
-  - Try adding a few jobs
+      - Retrieve and display Posting Details
+      - Change status to a Pile with data at top, buttons will eventually change status
+    - Companies
+      - Implement button click methods
+      - Implement lookups for open jobs
+      - Implement lookup for notes
+      - Implement lookup for people
+    - People
+      - Implement lookup for details
+      - Implement lookup for notes
+  - Change database lookups from name to ID
+    - This might require reading data from the database and storing it in the App object
+  - Implement "new item" buttons on sidebars
+    - Todo
+    - Company
+    - Job
+    - Person  
+  - Implement changing tabs when a main body related item is selected
+    - Job -> Notes
+    - Company -> Job
+    - Company -> Note
+    - Company -> People
+    - People -> Notes
+  - Implement data modification (database writes for changing existing information)
+    - Todo
+    - Company
+    - Job
+    - Person
+  - Implement item deletion to be found in main window
+    - Todo
+    - Company
+    - Job
+    - Person
+    
+  - Implement save/export option to write data out to text files
+  - Implement 
 - Milestone: Build job scraper

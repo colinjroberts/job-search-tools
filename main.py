@@ -74,7 +74,13 @@ class App():
         database.initialize_db(self.conn)
 
         # Build primary two subdivisions: tab_menu and body_container
-        tab_menu = self.build_tab_menu(['Todo', 'Jobs', 'Companies', 'People'])
+        tab_menu = self.build_tab_menu(['Todos', 'Jobs', 'Companies', 'People'])
+        self.tab_name_table_name_map = {
+            'Todos': "todo",
+            'Jobs': "job",
+            'Companies': "company",
+            'People': "person",
+        }
         # body_container = urwid.Filler(urwid.Text("default", 'left', 'clip'), "top")
         self.body_container = urwid.Columns(self.get_body_container_columns())
 
@@ -98,7 +104,7 @@ class App():
     def jobs(self):
         return database.get_all_names_from_table(self.conn, "job")
 
-    def todos(self):
+    def todo(self):
         return database.get_all_names_from_table(self.conn, "todo")
 
 
@@ -135,7 +141,7 @@ class App():
         cells = []
         for item in job_list:
             button = urwid.Button(item)
-            # urwid.connect_signal(button, 'click', self.on_tab_click, item)
+            urwid.connect_signal(button, 'click', self.on_job_item_click, item)
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
 
@@ -173,19 +179,62 @@ class App():
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
 
-    def build_main_body(self, identifier):
-        """Defines and builds sidebar used on Companies view with list of jobs
-        CLicking on one should show that company's information.
+    def build_todo_main_body(self, table, identifier=None):
+        """Defines and builds main_body used on Todos view based on selected sidebar item Identifier
 
         todo_id, todo_title, todo_date_modified, todo_description
         """
-        data = database.get_one_row_from_table_by_name(self.conn, "todo", identifier)
+        data = database.get_one_row_from_table_by_name(self.conn, table, identifier)
 
         text_items = []
         for item in data:
             text_items.append(str(item) + ": " + str(data[item]))
 
         return urwid.Text("\n".join(text_items))
+
+    def build_job_main_body(self, table, identifier=None):
+        """Defines and builds main_body used on Jobs view based on selected sidebar item Identifier
+        Main body has three parts:
+        top: Job Status as buttons
+        middle: Posting Details
+        bottom: Notes related to job
+        job_id, job_title, job_date_added, job_date_posted, job_description, job_status
+        """
+        # data = database.get_one_row_from_table_by_name(self.conn, table, identifier)
+
+        # Top Box - Job Status
+        main_body_top = urwid.LineBox(urwid.Filler(self.build_job_status_button_gridflow(), "top"),
+                                      title="Status", title_align="left")
+
+        # Mid Box - Details about the posting
+        main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                                      title="Posting Details", title_align="left")
+
+        # Bottom Box - Notes about the posting
+        list_of_notes_data_dicts = database.get_related_notes(self.conn, "job", identifier)
+
+        # Turn list of note data into walkable list of strings
+        list_of_notes_as_strings = []
+        for note_dict in list_of_notes_data_dicts:
+            note_as_text = "note_id: " + str(note_dict["note_id"]) + "   " + \
+                           "note_company: " + str(note_dict["note_company"]) + "   " + \
+                           "note_person: " + str(note_dict["note_person"]) + "   " + \
+                           "note_job: " + str(note_dict["note_job"]) + "   " + \
+                           "note_title: " + note_dict["note_title"] + "   " + \
+                           "note_date_edited: " + note_dict["note_date_edited"] + "\n" + \
+                           "note_details: " + note_dict["note_details"] + "\n"
+
+            list_of_notes_as_strings.append(urwid.Text(note_as_text))
+            # list_of_notes_as_strings.append(urwid.Text("\n".join([f"{x}: {note_dict[x]}" for x in note_dict])))
+
+        main_body_bottom = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(list_of_notes_as_strings)),
+                                         title="Notes", title_align="left")
+
+        # text_items = []
+        # for item in data:
+        #     text_items.append(str(item) + ": " + str(data[item]))
+
+        return [main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)]
 
 
     def build_body_side_bar(self, something, choice):
@@ -203,43 +252,83 @@ class App():
 
 
     # Main screen on first load
-    def get_body_container_columns(self, choice="Todo"):
-        column_1 = urwid.LineBox(urwid.Filler(urwid.Text("column1", 'center', 'clip'), "top"))
+    def get_body_container_columns(self, choice="todo"):
+        column_1 = urwid.LineBox(urwid.Filler(urwid.Text("", 'center', 'clip'), "middle"))
         column_2 = self.build_body_main_window()
         return [("weight", 1, column_1), ("weight", 3, column_2)]
 
-    def build_body_container(self, choice="Todo"):
+    def build_body_container(self, choice="todo"):
         """Builds the body container"""
         return urwid.Columns(self.get_body_container_columns())
 
 
+    def modify_main_body(self, button, choice, identifier = None):
+        if choice == "todo":
+            if not identifier:
+                main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todo items", 'center', 'clip'), "top"),
+                                          title="Todos", title_align="left")
+            else:
+                main_body = urwid.LineBox(urwid.Filler(self.build_todo_main_body(choice, identifier), "top"),
+                                          title="Todos", title_align="left")
+
+            self.body_container.contents[1] = (main_body, ("weight", 3, False))
+
+        elif choice == "company":
+            pass
+        elif choice == "job":
+            # Top Box - Job Status
+            main_body_top = urwid.LineBox(urwid.Filler(self.build_job_status_button_gridflow(), "top"),
+                                          title="Status", title_align="left")
+
+            # Mid Box - Details about the posting
+            main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                                          title="Posting Details", title_align="left")
+
+            # Bottom Box - Notes about the posting
+            main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                                             title="Notes", title_align="left")
+
+            list_of_main_body_widgets = [main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)]
+
+            if identifier:
+                list_of_main_body_widgets = self.build_job_main_body(choice, identifier)
+
+            main_body = urwid.Pile(list_of_main_body_widgets)
+
+            self.body_container.contents[1] = (main_body, ("weight", 3, False))
+
+
+        elif choice == "person":
+            pass
 
 
     def body_picker(self, button, choice, identifier = None):
         """Function for directly changing the text in body_container"""
 
-        if choice == "Todo":
+        if choice == "todo":
+            # Default view
             side_bar = urwid.LineBox(urwid.Filler(urwid.Text("todo items", 'center', 'clip'), "top"))
             main_body = self.build_body_main_window()
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
+
           # Side Bar - Selectable list of companies
             # Note, buttons need connecting
-            side_bar = urwid.LineBox(self.build_list_of_todos_for_sidebar(self.todos()))
+            side_bar = urwid.LineBox(self.build_list_of_todos_for_sidebar(self.todo()))
 
             # Main body - Displays selected Todos
             if not identifier:
-                main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todos", 'center', 'clip'), "top"),
+                main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todo items", 'center', 'clip'), "top"),
                                               title="Todos", title_align="left")
             else:
-                main_body = urwid.LineBox(urwid.Filler(self.build_main_body(identifier), "top"),
-                                              title="Todos", title_align="left")
+                main_body = urwid.LineBox(urwid.Filler(self.build_todo_main_body(choice, identifier), "top"),
+                                          title="Todos", title_align="left")
 
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
-        elif choice == "Companies":
+        elif choice == "company":
             # Side Bar - Selectable list of companies
             # Note, buttons need connecting
-            side_bar = urwid.LineBox(self.build_list_of_jobs_for_sidebar(self.companies()))
+            side_bar = urwid.LineBox(self.build_list_of_companies_for_sidebar(self.companies()))
 
             # Main body top - Open Jobs at selected company
             main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
@@ -256,10 +345,10 @@ class App():
 
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
-        elif choice == "People":
+        elif choice == "person":
             # Side Bar - Selectable list of companies
             # Note, buttons need connecting
-            side_bar = urwid.LineBox(self.build_list_of_jobs_for_sidebar(self.people()))
+            side_bar = urwid.LineBox(self.build_list_of_people_for_sidebar(self.people()))
 
             # Main body top - Details about the person (probably contact info)
             main_body_top = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
@@ -272,7 +361,7 @@ class App():
 
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 
-        elif choice == "Jobs":
+        elif choice == "job":
             # Side Bar - Selectable list of jobs
             # Note, buttons need connecting
             side_bar = urwid.LineBox(self.build_list_of_jobs_for_sidebar(self.jobs()))
@@ -305,7 +394,7 @@ class App():
         :param choice: user variable used for switch
         :return: None. For now, this just calls the body_picker function which directly changes
         """
-        self.body_picker(button, choice)
+        self.body_picker(button, self.tab_name_table_name_map[choice])
 
     def on_todo_item_click(self, button, identifier):
         """Callback function for changing main_body
@@ -313,7 +402,15 @@ class App():
         :param choice: user variable used for switch
         :return: None. For now, this just calls the body_picker function which directly changes
         """
-        self.body_picker(button, "Todo", identifier)
+        self.modify_main_body(button, "todo", identifier)
+
+    def on_job_item_click(self, button, identifier):
+        """Callback function for changing main_body
+        :param button: not sure what this is for, but some first variable is expected
+        :param choice: user variable used for switch
+        :return: None. For now, this just calls the body_picker function which directly changes
+        """
+        self.modify_main_body(button, "job", identifier)
 
 
     def exit_program(self):
