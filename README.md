@@ -26,14 +26,6 @@ Tools for organizing and performing a job search
 ## TODO:
 - Milestone: Build manual version of E2E 1
   - Establish database lookups for all tabs
-    - Jobs
-      - Retrieve and display Posting Details
-      - Change status to a Pile with data at top, buttons will eventually change status
-    - Companies
-      - Implement button click methods
-      - Implement lookups for open jobs
-      - Implement lookup for notes
-      - Implement lookup for people
     - People
       - Implement lookup for details
       - Implement lookup for notes
