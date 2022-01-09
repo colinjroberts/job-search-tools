@@ -386,6 +386,30 @@ def get_all_names_from_table(conn, table):
 
     return list_output
 
+
+def get_all_rows_from_table(conn, table):
+    """Returns all values from the name/title column of all items in a table"""
+    name_column = ""
+    cursor = None
+
+    accepted_tables = ('job', 'company', 'note', 'person', 'todo')
+
+    if table in accepted_tables:
+        cursor = conn.execute(f"SELECT * FROM {table}")
+
+    list_of_items = []
+    list_output = []
+    list_of_column_names = [x[0] for x in cursor.description]
+    for cursor_row in cursor:
+        data = {}
+        for i, item in enumerate(list_of_column_names):
+            data[item] = cursor_row[i]
+        list_output.append(cursor_row)
+        list_of_items.append(data)
+
+    return list_of_items
+
+
 def get_related_notes(conn, related_table, related_identifier):
     name_column = ""
     cursor = None

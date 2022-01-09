@@ -102,7 +102,8 @@ class App():
         return database.get_all_names_from_table(self.conn, "person")
 
     def jobs(self):
-        return database.get_all_names_from_table(self.conn, "job")
+        return database.get_all_rows_from_table(self.conn, "job")
+        # return database.get_all_names_from_table(self.conn, "job")
 
     def todo(self):
         return database.get_all_names_from_table(self.conn, "todo")
@@ -157,16 +158,27 @@ class App():
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
 
+
+
+
     def build_list_of_jobs_for_sidebar(self, job_list):
         """Defines and builds sidebar used on Jobs view with list of jobs
         CLicking on one should show that job's information.
+
+        job_list: a list of dicts of jobs with all of their data
         """
-        cells = []
+        rows = [urwid.Columns([(10, urwid.Text(('bold', "Job ID"))), urwid.Text(('bold', "Job Title"))], dividechars=1)]
+
         for item in job_list:
-            button = urwid.Button(item)
-            urwid.connect_signal(button, 'click', self.on_job_item_click, item)
-            cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
-        return urwid.ListBox(urwid.SimpleFocusListWalker(cells))
+            if item:
+                button = urwid.Button(str(item["job_id"]))
+                urwid.connect_signal(button, 'click', self.on_job_item_click, item["job_id"])
+                one_row = urwid.Columns([(10, button), urwid.Text(item["job_title"]),
+                                          ], dividechars=1)
+
+                rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
 
     def build_list_of_companies_for_sidebar(self, company_list):
@@ -341,12 +353,6 @@ class App():
 
         return [main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)]
 
-
-    def build_body_side_bar(self, something, choice):
-        """Builds the sidebar of the body depending on which tab is currently active
-        :return:
-        """
-
     def build_body_main_window(self):
         """Builds the main window of the body depending on which tab is currently active
         The calling method is a Filler, and this will return different Text objects to it
@@ -354,7 +360,6 @@ class App():
         """
         main_window_text = urwid.Text(f"Choose a tab to get started", 'center', 'clip')
         return urwid.LineBox(urwid.Filler(main_window_text, "top"))
-
 
     # Main screen on first load
     def get_body_container_columns(self, choice="todo"):
@@ -518,7 +523,7 @@ class App():
             # Side Bar - Selectable list of jobs
             # Note, buttons need connecting
             side_bar = urwid.LineBox(self.build_list_of_jobs_for_sidebar(self.jobs()))
-
+            # raise ValueError(f"{side_bar=}")
             # Top Box - Job Status
             main_body_top = urwid.LineBox(urwid.Filler(self.build_job_status_button_gridflow(), "top"),
                                           title="Status", title_align="left")
