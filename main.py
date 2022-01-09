@@ -137,12 +137,18 @@ class App():
         """Builds a table of job_title, date_added, and job_status for a given selected company"""
         # Retrieve job data
         data = database.get_related_jobs(self.conn, 'company', company_identifier)
-        rows = [urwid.Columns([urwid.Text(('bold', "Job Title")), urwid.Text(('bold', "Date Added")), urwid.Text(('bold', "Status"))])]
+        rows = [urwid.Columns([(10, urwid.Text(('bold', "Job ID"))),
+                               (14, urwid.Text(('bold', "Status"))),
+                               urwid.Text(('bold', "Job Title")),
+                               ('pack', urwid.Text(('bold', "Date Added"))),
+                               ], dividechars=3, min_width=10)]
         for item in data:
             if item:
-                one_row = urwid.Columns([urwid.Button(item["job_title"]),
-                                         urwid.Text(item["job_date_added"]),
-                                         urwid.Text(item["job_status"])])
+                one_row = urwid.Columns([(10, urwid.Button(str(item["job_id"]))),
+                                         (14, urwid.Text(item["job_status"])),
+                                         urwid.Text(item["job_title"]),
+                                         ('pack', urwid.Text(item["job_date_added"])),
+                                        ], dividechars=3, min_width=10)
                 rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
