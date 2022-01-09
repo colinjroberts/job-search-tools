@@ -382,6 +382,6 @@ if __name__ == "__main__":
         if conn:
             # data = database.get_all_names_from_table(conn, "todo")
             # print(data)
-            data = database.get_one_row_from_table_by_name(conn, "person", "Alice Baker")
+            data = database.get_one_row_from_table_by_id(conn, "job", 1)
             print(data)
             conn.close()

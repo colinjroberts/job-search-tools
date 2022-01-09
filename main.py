@@ -52,9 +52,8 @@ Inside body_container will be some kind of subdivision
 
 
 import urwid
-import csv
+import string
 import database
-import time
 
 """
 TODO
@@ -131,7 +130,7 @@ class App():
             button = urwid.Button(item)
             # urwid.connect_signal(button, 'click', self.on_tab_click, item)
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
-        return urwid.GridFlow(cells, 17, 2, 1, "left")
+        return urwid.GridFlow(cells, 17, 2, 0, "left")
 
     def build_related_jobs_for_company_walkable(self, company_identifier):
         """Builds a table of job_title, date_added, and job_status for a given selected company"""
@@ -142,9 +141,13 @@ class App():
                                urwid.Text(('bold', "Job Title")),
                                ('pack', urwid.Text(('bold', "Date Added"))),
                                ], dividechars=3, min_width=10)]
+
         for item in data:
             if item:
-                one_row = urwid.Columns([(10, urwid.Button(str(item["job_id"]))),
+                button = urwid.Button(str(item["job_id"]))
+                urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
+
+                one_row = urwid.Columns([(10, button),
                                          (14, urwid.Text(item["job_status"])),
                                          urwid.Text(item["job_title"]),
                                          ('pack', urwid.Text(item["job_date_added"])),
@@ -293,8 +296,12 @@ class App():
         bottom: Notes related to job
         job_id, job_title, job_date_added, job_date_posted, job_description, job_status
         """
+
         # Retrieve job data
-        data = database.get_one_row_from_table_by_name(self.conn, table, identifier)
+        if isinstance(identifier, int):
+            data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
+        else:
+            data = database.get_one_row_from_table_by_name(self.conn, table, identifier)
         text_items = []
         for item in data:
             text_items.append(str(item) + ": " + str(data[item]))
@@ -452,11 +459,6 @@ class App():
             self.body_container.contents[1] = (main_body, ("weight", 3, False))
 
 
-
-
-
-
-
     def default_body_builder(self, button, choice):
         """Function for directly changing the text in body_container"""
 
@@ -577,6 +579,20 @@ class App():
         :return: None. For now, this just calls the body_picker function which directly changes
         """
         self.modify_main_body(button, "person", identifier)
+
+    def on_related_company_job_click(self, button, identifier):
+        """Callback function for when clicking on a job on the companies tab
+
+        When looking at a company and clicking on a job, view should change to that
+        job so data entry can happen. identifier will be the job ID
+
+        :param button: not sure what this is for, but some first variable is expected
+        :param choice: user variable used for switch
+        :return: None. For now, this just calls the body_picker function which directly changes
+        """
+        # raise ValueError(f"the identifier passed was {identifier}")
+        self.default_body_builder(button, "job")
+        self.modify_main_body(button, "job", identifier)
 
     def exit_program(self):
         raise urwid.ExitMainLoop()

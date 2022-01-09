@@ -260,55 +260,52 @@ def get_first_company_id_given_name(conn, company_name):
                           """, [company_name])
     return cursor.fetchone()[0]
 
-def get_one_row_from_table(conn, table, row_id):
-    table_data_names = []
+def get_one_row_from_table_by_id(conn, table, row_id):
+    cursor = None
+    row_id = [int(row_id)]
     if table == "job":
-        db_data_names = """job_id, job_title, job_date_added, 
-                              job_date_posted, job_description, job_status"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM job
                                  WHERE job_id == (?)
-                              """, db_data_names, row_id)
+                              """, row_id)
 
     if table == "company":
-        db_data_names = """company_id, company_name"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM company
                                  WHERE company_id == (?)
-                              """, db_data_names, row_id)
+                              """, row_id)
 
     if table == "note":
-        db_data_names = """note_id, note_title, note_date_added, note_details"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM note
                                  WHERE note_id == (?)
-                              """, db_data_names, row_id)
+                              """, row_id)
 
     if table == "person":
-        db_data_names = """person_id, person_name, person_email, person_phone"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM person
                                  WHERE person_id == (?)
-                              """, db_data_names, row_id)
+                              """, row_id)
 
     if table == "todo":
-        db_data_names = """todo_id, todo_title, todo_date_modified, todo_description"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.execute("""SELECT (?)
+        cursor = conn.execute("""SELECT *
                                  FROM todo
                                  WHERE todo_id == (?)
-                              """, db_data_names, row_id)
+                              """, row_id)
 
     # Extract data from query cursor
     data = {}
-    list_of_column_names = [x[0] for x in cursor.description]
-    for i, cursor_row in enumerate(cursor):
-        data[list_of_column_names[i]] = cursor_row[i]
+    if cursor:
+        list_of_column_names = [x[0] for x in cursor.description]
+        tuple_of_data = ()
 
+        for cursor_row in cursor:
+            tuple_of_data = cursor_row
+
+        for i, item in enumerate(list_of_column_names):
+            data[item] = tuple_of_data[i]
+    else:
+        data["SQL Result"] = "None"
     return data
 
 
