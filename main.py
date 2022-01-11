@@ -87,12 +87,35 @@ class App():
         # main_pile = urwid.Pile([('pack', tab_menu), body_container])
         self.main_pile = urwid.Pile([('pack', tab_menu), self.body_container])
 
-        self.mainloop = urwid.MainLoop(self.main_pile,
+        self.view = self.main_pile
+
+        self.mainloop = urwid.MainLoop(self.view,
                                   palette=[('reversed', 'standout', ''),
                                            ('bold', 'bold', '')],
                                   unhandled_input=self.q_for_exit)
 
         self.mainloop.run()
+
+
+    def close_pop_up_window(self, button):
+        """Closes the pop up window"""
+        self.mainloop.widget = self.main_pile
+
+    def make_pop_up_window(self, title, edit_field):
+        """Returns a simple box window, to be rendered on top of the layout"""
+        body = [urwid.Text("title")]
+        body.append(urwid.Divider())
+        body.append(urwid.Edit(multiline=True))
+        body.append(urwid.Divider())
+
+        button = urwid.Button('Save')
+        urwid.connect_signal(button, 'click', self.close_pop_up_window)
+        body.append(urwid.AttrMap(button, None, focus_map='reversed'))
+
+        popup = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(body)))
+
+        self.mainloop.widget = urwid.Overlay(popup, self.main_pile, "center", ("relative", 50), "middle", ("relative", 50))
+
 
     def build_tab_menu(self, choices):
         """Defines and builds tab_menu using provided choices
@@ -104,7 +127,6 @@ class App():
             urwid.connect_signal(button, 'click', self.on_tab_click, item)
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.GridFlow(cells, 20, 2, 1, "left")
-
 
     def build_job_status_button_gridflow(self):
         """Defines and builds tab_menu using provided choices
@@ -229,11 +251,9 @@ class App():
         todo_id, todo_title, todo_date_modified, todo_description
         """
         data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
-
         text_items = []
         for item in data:
             text_items.append(str(item) + ": " + str(data[item]))
-
         return urwid.Text("\n".join(text_items))
 
     def build_company_main_body(self, table, identifier=None):
@@ -617,6 +637,10 @@ class App():
         raise urwid.ExitMainLoop()
 
     def q_for_exit(self, key):
+        if key == "1":
+            self.make_pop_up_window()
+        if key == "2":
+            self.close_pop_up_window()
         if key in ('q', 'Q'):
             self.exit_program()
 
