@@ -447,6 +447,43 @@ def get_related_notes(conn, related_table, related_identifier):
 
     return list_of_notes
 
+def get_related_notes_by_id(conn, related_table, related_identifier):
+    name_column = ""
+    cursor = None
+
+    if related_table == "job":
+        note_join_column = "note_job"
+        id_column = "job_id"
+        name_column = "job_title"
+
+    if related_table == "company":
+        note_join_column = "note_company"
+        id_column = "company_id"
+        name_column = "company_name"
+
+    if related_table == "person":
+        note_join_column = "note_person"
+        id_column = "person_id"
+        name_column = "person_name"
+
+
+    cursor = conn.execute(f"SELECT * FROM note "
+                          f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
+                          f"WHERE {id_column} == (?)", [related_identifier])
+
+    # Extract data from query cursor
+    list_of_notes = []
+    list_output = []
+    list_of_column_names = [x[0] for x in cursor.description]
+    for cursor_row in cursor:
+        data = {}
+        for i, item in enumerate(list_of_column_names):
+            data[item] = cursor_row[i]
+        list_output.append(cursor_row)
+        list_of_notes.append(data)
+
+    return list_of_notes
+
 def get_related_people(conn, related_table, related_identifier):
     name_column = ""
     cursor = None
@@ -477,15 +514,13 @@ def get_related_jobs(conn, related_table, related_identifier):
     name_column = ""
     cursor = None
 
-    company_id = get_first_company_id_given_name(conn, related_identifier)
-
     if related_table == "company":
         join_column = "job_company"
         id_column = "company_id"
 
     cursor = conn.execute(f"SELECT * FROM job "
                           f"INNER JOIN {related_table} ON {related_table}.{id_column} = job.{join_column} "
-                          f"WHERE {id_column} = (?)", [company_id])
+                          f"WHERE {id_column} = (?)", [related_identifier])
 
     # Extract data from query cursor
     list_of_jobs = []

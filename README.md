@@ -25,12 +25,6 @@ Tools for organizing and performing a job search
 
 ## TODO:
 - Milestone: Build manual version of E2E 1
-  - Establish database lookups for all tabs
-    - People
-      - Implement lookup for details
-      - Implement lookup for notes
-  - Change database lookups from name to ID
-    - This might require reading data from the database and storing it in the App object
   - Implement "new item" buttons on sidebars
     - Todo
     - Company
