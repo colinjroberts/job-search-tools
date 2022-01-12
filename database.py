@@ -470,7 +470,11 @@ def get_related_notes_by_id(conn, related_table, related_identifier):
         name_column = "person_name"
 
 
-    cursor = conn.execute(f"SELECT * FROM note "
+    # cursor = conn.execute(f"SELECT * FROM note "
+    #                       f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
+    #                       f"WHERE {id_column} == (?)", [related_identifier])
+
+    cursor = conn.execute(f"SELECT note.* FROM note "
                           f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
                           f"WHERE {id_column} == (?)", [related_identifier])
 
@@ -498,7 +502,7 @@ def get_related_people(conn, related_table, related_identifier):
 
     cursor = conn.execute(f"SELECT * FROM person "
                           f"INNER JOIN {related_table} ON {related_table}.{id_column} == person.{note_join_column} "
-                          f"WHERE {name_column} == (?)", [related_identifier])
+                          f"WHERE {id_column} == (?)", [related_identifier])
 
     # Extract data from query cursor
     list_of_notes = []
@@ -599,6 +603,10 @@ def insert_table_data(conn, table, dict_of_data_to_insert):
 
 def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
 
+    int_fields = ['job_company', 'person_company', 'note_company', 'note_person', 'note_job']
+    if field_name in int_fields:
+        field_data = int(field_data)
+
     if table == "todo":
         date_field = "todo_date_modified"
         cursor = conn.execute(f"""UPDATE todo
@@ -615,21 +623,21 @@ def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
 
     if table == "person":
         date_field = "person_date_modified"
-        cursor = conn.execute(f"""UPDATE job
+        cursor = conn.execute(f"""UPDATE person
                                   SET {field_name} = ?,
                                       {date_field} = DATETIME('now','localtime')
                                   WHERE person_id = {row_id}""", [field_data])
 
     if table == "note":
         date_field = "note_date_modified"
-        cursor = conn.execute(f"""UPDATE job
+        cursor = conn.execute(f"""UPDATE note
                                   SET {field_name} = ?,
                                       {date_field} = DATETIME('now','localtime')
-                                  WHERE job_id = {row_id}""", [field_data])
+                                  WHERE note_id = {row_id}""", [field_data])
 
 
     if table == "company":
-        cursor = conn.execute(f"""UPDATE job
+        cursor = conn.execute(f"""UPDATE company
                                   SET {field_name} = ?,
                                   WHERE company_id = {row_id}""", [field_data])
 
