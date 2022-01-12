@@ -593,6 +593,22 @@ def insert_table_data(conn, table, dict_of_data_to_insert):
                               """, db_data_names, data_to_insert)
     return conn
 
+
+def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
+
+    if table == "todo":
+        cursor = conn.execute(f"""UPDATE todo
+                                  SET {field_name} = ?
+                                  WHERE todo_id = {row_id}""", [field_data])
+
+    if table == "job":
+        cursor = conn.execute(f"""UPDATE job
+                                  SET {field_name} = ?
+                                  WHERE job_id = {row_id}""", [field_data])
+
+    conn.commit()
+    return conn
+
 def open_db():
     """Opens DB, initializing if needed, and inserts test data"""
     if not path.exists(DB_PATH):

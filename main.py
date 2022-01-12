@@ -101,16 +101,36 @@ class App():
         """Closes the pop up window"""
         self.mainloop.widget = self.main_pile
 
-    def make_pop_up_window(self, title, edit_field):
+    def commit_pop_up_changes(self, button, list_of_name_data_id_table):
+        """Updates the data in the field"""
+
+        database.update_value_by_id_fieldname(self.conn,
+                                              list_of_name_data_id_table[3],
+                                              list_of_name_data_id_table[2],
+                                              list_of_name_data_id_table[0],
+                                              list_of_name_data_id_table[1].edit_text,
+                                              )
+        self.modify_main_body(button, list_of_name_data_id_table[3], identifier=list_of_name_data_id_table[2])
+        self.close_pop_up_window(button)
+
+    def make_pop_up_window(self, button, list_of_things):
         """Returns a simple box window, to be rendered on top of the layout"""
-        body = [urwid.Text("title")]
+        field_name, edit_field, id, table = list_of_things[0], list_of_things[1], list_of_things[2], list_of_things[3]
+        body = [urwid.Text("item " + id + ": " + field_name)]
         body.append(urwid.Divider())
-        body.append(urwid.Edit(multiline=True))
+        edited_text = urwid.Edit(caption='', edit_text=edit_field, multiline=True)
+        body.append(edited_text)
         body.append(urwid.Divider())
 
-        button = urwid.Button('Save')
-        urwid.connect_signal(button, 'click', self.close_pop_up_window)
-        body.append(urwid.AttrMap(button, None, focus_map='reversed'))
+        save_button = urwid.Button('Save')
+        urwid.connect_signal(save_button, 'click', self.commit_pop_up_changes, [field_name, edited_text, id, table])
+
+        cancel_button = urwid.Button('Cancel')
+        urwid.connect_signal(cancel_button, 'click', self.close_pop_up_window)
+
+        buttons = urwid.Columns([urwid.AttrMap(save_button, None, focus_map='reversed'),
+                                urwid.AttrMap(cancel_button, None, focus_map='reversed')])
+        body.append(buttons)
 
         popup = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(body)))
 
@@ -250,11 +270,23 @@ class App():
 
         todo_id, todo_title, todo_date_modified, todo_description
         """
+        editables = ["todo_title", "todo_details"]
+        # This addition makes all items that show up editable by clicking them as buttons
         data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
-        text_items = []
+        rows = []
         for item in data:
-            text_items.append(str(item) + ": " + str(data[item]))
-        return urwid.Text("\n".join(text_items))
+            if str(item) in editables:
+                button = urwid.Button(str(data[item]))
+                item_name = str(item)
+                item_value = str(data[item])
+                item_id = str(data["todo_id"])
+                urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, "todo"])
+                one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
+            else:
+                one_row = urwid.Text(str(item) + ": " + str(data[item]))
+            rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
     def build_company_main_body(self, table, identifier=None):
         # Top Box - Open Jobs
@@ -410,7 +442,7 @@ class App():
                 main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todo items", 'center', 'clip'), "top"),
                                           title="Todos", title_align="left")
             else:
-                main_body = urwid.LineBox(urwid.Filler(self.build_todo_main_body(choice, identifier), "top"),
+                main_body = urwid.LineBox(self.build_todo_main_body(choice, identifier),
                                           title="Todos", title_align="left")
 
             self.body_container.contents[1] = (main_body, ("weight", 3, False))

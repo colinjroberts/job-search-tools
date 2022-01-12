@@ -382,6 +382,9 @@ if __name__ == "__main__":
         if conn:
             # data = database.get_all_names_from_table(conn, "todo")
             # print(data)
-            data = database.get_one_row_from_table_by_id(conn, "job", 1)
+            data = database.get_one_row_from_table_by_id(conn, "todo", 1)
+            print(data)
+            update = database.update_value_by_id_fieldname(conn, "todo", 1, "todo_details", "Something")
+            data = database.get_one_row_from_table_by_id(conn, "todo", 1)
             print(data)
             conn.close()
