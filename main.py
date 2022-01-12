@@ -70,7 +70,7 @@ class App():
     def __init__(self):
         # Establish database connection
         self.conn = database.open_db()
-        database.initialize_db(self.conn)
+        # database.initialize_db(self.conn)
 
         # Build primary two subdivisions: tab_menu and body_container
         tab_menu = self.build_tab_menu(['Todos', 'Jobs', 'Companies', 'People'])
@@ -158,7 +158,7 @@ class App():
             button = urwid.Button(item)
             # urwid.connect_signal(button, 'click', self.on_tab_click, item)
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
-        return urwid.GridFlow(cells, 17, 2, 0, "left")
+        return urwid.GridFlow(cells, 16, 1, 0, "left")
 
     def build_related_jobs_for_company_walkable(self, company_identifier):
         """Builds a table of job_title, date_added, and job_status for a given selected company"""
@@ -304,7 +304,7 @@ class App():
                            "note_person: " + str(note_dict["note_person"]) + "   " + \
                            "note_job: " + str(note_dict["note_job"]) + "   " + \
                            "note_title: " + note_dict["note_title"] + "   " + \
-                           "note_date_edited: " + note_dict["note_date_edited"] + "\n" + \
+                           "note_date_modified: " + note_dict["note_date_modified"] + "\n" + \
                            "note_details: " + note_dict["note_details"] + "\n"
 
             list_of_notes_as_strings.append(urwid.Text(note_as_text))
@@ -350,7 +350,7 @@ class App():
                            "note_person: " + str(note_dict["note_person"]) + "   " + \
                            "note_job: " + str(note_dict["note_job"]) + "   " + \
                            "note_title: " + note_dict["note_title"] + "   " + \
-                           "note_date_edited: " + note_dict["note_date_edited"] + "\n" + \
+                           "note_date_modified: " + note_dict["note_date_modified"] + "\n" + \
                            "note_details: " + note_dict["note_details"] + "\n"
 
             list_of_notes_as_strings.append(urwid.Text(note_as_text))
@@ -402,7 +402,7 @@ class App():
                            "note_person: " + str(note_dict["note_person"]) + "   " + \
                            "note_job: " + str(note_dict["note_job"]) + "   " + \
                            "note_title: " + note_dict["note_title"] + "   " + \
-                           "note_date_edited: " + note_dict["note_date_edited"] + "\n" + \
+                           "note_date_modified: " + note_dict["note_date_modified"] + "\n" + \
                            "note_details: " + note_dict["note_details"] + "\n"
 
             list_of_notes_as_strings.append(urwid.Text(note_as_text))

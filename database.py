@@ -38,6 +38,7 @@ def create_new_db(conn):
               job_company INTEGER NOT NULL,
               job_title TEXT,
               job_date_added TEXT DEFAULT CURRENT_DATE,
+              job_date_modified TEXT DEFAULT CURRENT_DATE,
               job_date_posted TEXT,
               job_description TEXT,
               job_status TEXT DEFAULT "Interested",
@@ -52,6 +53,7 @@ def create_new_db(conn):
               person_name       TEXT,
               person_email      TEXT,
               person_phone      INTEGER,
+              person_date_modified TEXT DEFAULT CURRENT_DATE,
               FOREIGN KEY(person_company) REFERENCES company(company_id)
              );''')
 
@@ -63,7 +65,7 @@ def create_new_db(conn):
               note_person       INTEGER,
               note_job          INTEGER,
               note_title        TEXT,
-              note_date_edited  TEXT DEFAULT CURRENT_DATE,
+              note_date_modified  TEXT DEFAULT CURRENT_DATE,
               note_details      TEXT,
               FOREIGN KEY(note_company) REFERENCES company(company_id),
               FOREIGN KEY(note_job) REFERENCES job(job_id),
@@ -92,13 +94,14 @@ def insert_many_table_data(conn, table, list_of_data_to_insert):
         job_company INTEGER NOT NULL,
         job_title TEXT,
         job_date_added TEXT DEFAULT CURRENT_DATE,
+        job_date_modified TEXT DEFAULT CURRENT_DATE,
         job_date_posted TEXT,
         job_description TEXT,
         job_status TEXT DEFAULT "Interested","""
         db_data_names = """job_title, job_date_added, job_date_posted, job_description, job_status"""
         table_data_names = db_data_names.split(", ")
         cursor = conn.executemany('''INSERT INTO job
-                                  VALUES (?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
 
     if table == "company":
         db_data_names = "company_name"
@@ -107,16 +110,16 @@ def insert_many_table_data(conn, table, list_of_data_to_insert):
                                   VALUES (?, ?)''', list_of_data_to_insert)
 
     if table == "note":
-        db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_edited, note_details"""
+        db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_modified, note_details"""
         table_data_names = db_data_names.split(", ")
         cursor = conn.executemany('''INSERT INTO note
                                VALUES (?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
 
     if table == "person":
-        db_data_names = """person_id, person_company, person_name, person_email, person_phone"""
+        db_data_names = """person_id, person_company, person_name, person_email, person_phone, person_date_modified"""
         table_data_names = db_data_names.split(", ")
         cursor = conn.executemany('''INSERT INTO person
-                                  VALUES (?, ?, ?, ?, ?)''', list_of_data_to_insert)
+                                  VALUES (?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
 
     if table == "todo":
         db_data_names = """todo_title, todo_date_modified, todo_details"""
@@ -154,36 +157,36 @@ def insert_test_data_via_objects(conn):
 
     # Insert test data into job table
     list_of_data_to_insert = [
-        (None, 1, "Software Engineer", "2021-12-01", "2021-11-01", "Lorem Ipsum", "Interested"),
-        (None, 2, "Engineer in Test", "2021-12-01", "2021-11-02", "Lorem Ipsum", "Interested"),
-        (None, 3, "Program Manager", "2021-12-01", "2021-11-02", "Lorem Ipsum", "Interested"),
-        (None, 1, "Product Designer", "2021-12-01", "2021-11-04", "Lorem Ipsum", "Interested"),
-        (None, 5, "Engineering Manager", "2021-12-01", "2021-11-05", "Lorem Ipsum", "Interested"),
-        (None, 7, "Junior Software Engineer", "2021-12-06", "2021-12-01", "Lorem Ipsum", "Interested"),
-        (None, 1, "SDE I", "2021-12-06", "2021-12-02", "Lorem Ipsum", "Interested"),
-        (None, 1, "Software Engineer - Backend, Finance", "2021-12-06", "2021-12-03", "Lorem Ipsum", "Interested"),
-        (None, 1, "Manager; Software Engineering", "2021-12-06", "2021-12-04", "Lorem Ipsum", "Interested"),
-        (None, 1, "Software Engineering and Product Design Specialist", "2021-12-06", "2021-12-05", "Lorem Ipsum", "Interested"),
+        (None, 1, "Software Engineer", "2021-12-01", None, "2021-11-01", "Lorem Ipsum", "Interested"),
+        (None, 2, "Engineer in Test", "2021-12-01", None, "2021-11-02", "Lorem Ipsum", "Interested"),
+        (None, 3, "Program Manager", "2021-12-01", None, "2021-11-02", "Lorem Ipsum", "Interested"),
+        (None, 1, "Product Designer", "2021-12-01", None, "2021-11-04", "Lorem Ipsum", "Interested"),
+        (None, 5, "Engineering Manager", "2021-12-01", None, "2021-11-05", "Lorem Ipsum", "Interested"),
+        (None, 7, "Junior Software Engineer", "2021-12-06", None, "2021-12-01", "Lorem Ipsum", "Interested"),
+        (None, 1, "SDE I", "2021-12-06",None,  "2021-12-02", "Lorem Ipsum", "Interested"),
+        (None, 1, "Software Engineer - Backend, Finance", "2021-12-06", None, "2021-12-03", "Lorem Ipsum", "Interested"),
+        (None, 1, "Manager; Software Engineering", "2021-12-06", None, "2021-12-04", "Lorem Ipsum", "Interested"),
+        (None, 1, "Software Engineering and Product Design Specialist", "2021-12-06", None, "2021-12-05", "Lorem Ipsum", "Interested"),
     ]
     insert_many_table_data(conn, "job", list_of_data_to_insert)
 
     # Insert test data into people table
     # person_id, company_id, person_name, person_email, person_phone
     list_of_data_to_insert = [
-        (None, 1, "Alice Baker", "abaker@something.com", "123-456-7890"),
-        (None, 1, "Cooper Douglas", "cdcdcd@something.com", "123-456-7890"),
-        (None, 1, "Eugene Fernando", "eforever@something.com", "123-456-7890"),
-        (None, 2, "Gretchen Hyacinth", "hyacinth-g@something.com", "123-456-7890"),
-        (None, 3, "Jeannie Kidseth", "jkidseth@something.com", "123-456-7890"),
-        (None, 4, "Liz Maroney", "notjennamaroney@something.com", "123-456-7890"),
-        (None, 5, "Norbert Ort", "norbort@something.com", "123-456-7890"),
-        (None, 6, "Penny Quinn", "pennyforaquinn@something.com", "123-456-7890")
+        (None, 1, "Alice Baker", "abaker@something.com", "123-456-7890", None),
+        (None, 1, "Cooper Douglas", "cdcdcd@something.com", "123-456-7890", None),
+        (None, 1, "Eugene Fernando", "eforever@something.com", "123-456-7890", None),
+        (None, 2, "Gretchen Hyacinth", "hyacinth-g@something.com", "123-456-7890", None),
+        (None, 3, "Jeannie Kidseth", "jkidseth@something.com", "123-456-7890", None),
+        (None, 4, "Liz Maroney", "notjennamaroney@something.com", "123-456-7890", None),
+        (None, 5, "Norbert Ort", "norbort@something.com", "123-456-7890", None),
+        (None, 6, "Penny Quinn", "pennyforaquinn@something.com", "123-456-7890", None)
     ]
     insert_many_table_data(conn, "person", list_of_data_to_insert)
 
 
     # Insert test data into note table
-    db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_edited, note_details"""
+    db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_modified, note_details"""
     list_of_data_to_insert = [
         (None, 6,   1, 3, "Test note 1", "2021-12-01", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam quis magna vitae augue ornare luctus et vel sapien. Etiam et neque id nisl volutpat venenatis eget id odio. Etiam lobortis orci nulla, sed varius libero mattis sit amet. Aenean tristique finibus tincidunt. Duis interdum, lectus in volutpat congue, odio libero condimentum enim, cursus vulputate tortor elit et odio."),
         (None, 4,   None, 2, "Test note 2", "2021-12-02", "Phasellus posuere consequat arcu, at convallis erat scelerisque in. Vestibulum id volutpat augue. Curabitur pretium augue diam, a dignissim risus fringilla eu. Phasellus blandit luctus erat eget vulputate. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos."),
@@ -597,14 +600,38 @@ def insert_table_data(conn, table, dict_of_data_to_insert):
 def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
 
     if table == "todo":
+        date_field = "todo_date_modified"
         cursor = conn.execute(f"""UPDATE todo
-                                  SET {field_name} = ?
+                                  SET {field_name} = ?,
+                                      {date_field} = DATETIME('now','localtime')
                                   WHERE todo_id = {row_id}""", [field_data])
 
     if table == "job":
+        date_field = "job_date_modified"
         cursor = conn.execute(f"""UPDATE job
-                                  SET {field_name} = ?
+                                  SET {field_name} = ?,
+                                      {date_field} = DATETIME('now','localtime')
                                   WHERE job_id = {row_id}""", [field_data])
+
+    if table == "person":
+        date_field = "person_date_modified"
+        cursor = conn.execute(f"""UPDATE job
+                                  SET {field_name} = ?,
+                                      {date_field} = DATETIME('now','localtime')
+                                  WHERE person_id = {row_id}""", [field_data])
+
+    if table == "note":
+        date_field = "note_date_modified"
+        cursor = conn.execute(f"""UPDATE job
+                                  SET {field_name} = ?,
+                                      {date_field} = DATETIME('now','localtime')
+                                  WHERE job_id = {row_id}""", [field_data])
+
+
+    if table == "company":
+        cursor = conn.execute(f"""UPDATE job
+                                  SET {field_name} = ?,
+                                  WHERE company_id = {row_id}""", [field_data])
 
     conn.commit()
     return conn
