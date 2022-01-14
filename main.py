@@ -88,7 +88,7 @@ class App():
         self.main_pile = urwid.Pile([('pack', tab_menu), self.body_container])
 
         self.view = self.main_pile
-
+        self.item_selected_for_popup = None
         self.mainloop = urwid.MainLoop(self.view,
                                   palette=[('reversed', 'standout', ''),
                                            ('bold', 'bold', '')],
@@ -100,6 +100,8 @@ class App():
     def close_pop_up_window(self, button):
         """Closes the pop up window"""
         self.mainloop.widget = self.main_pile
+        self.body_container[1].focus_position = self.item_selected_for_popup
+        # raise ValueError(f"{self.item_selected_for_popup}")
 
     def commit_pop_up_changes(self, button, list_of_name_data_id_table):
         """Updates the data in the field"""
@@ -110,12 +112,15 @@ class App():
                                               list_of_name_data_id_table[0],
                                               list_of_name_data_id_table[1].edit_text,
                                               )
+        self.modify_side_body(button, list_of_name_data_id_table[3])
         self.modify_main_body(button, list_of_name_data_id_table[3], identifier=list_of_name_data_id_table[2])
         self.close_pop_up_window(button)
 
     def make_pop_up_window(self, button, list_of_things):
         """Returns a simple box window, to be rendered on top of the layout"""
         field_name, edit_field, id, table = list_of_things[0], list_of_things[1], list_of_things[2], list_of_things[3]
+        self.item_selected_for_popup = self.body_container[1].focus_position
+
         body = [urwid.Text("item " + id + ": " + field_name)]
         body.append(urwid.Divider())
         edited_text = urwid.Edit(caption='', edit_text=edit_field, multiline=True)
@@ -187,21 +192,6 @@ class App():
 
     def build_related_people_for_company_walkable(self, company_identifier):
         """Builds a table of job_title, date_added, and job_status for a given selected company"""
-
-        """
-        list_of_people_data_dicts = database.get_related_people(self.conn, "company", identifier)
-        list_of_people_as_strings = []
-        for person_dict in list_of_people_data_dicts:
-            people_as_text = "person_id: " + str(person_dict["person_id"]) + "   " + \
-                           "person_company: " + str(person_dict["person_company"]) + "   " + \
-                           "person_email: " + str(person_dict["person_email"]) + "   " + \
-                           "person_phone: " + person_dict["person_phone"]
-
-            list_of_people_as_strings.append(urwid.Text(people_as_text))
-        main_body_mid = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(list_of_people_as_strings)),
-                                         title="People", title_align="left")
-"""
-
         # Retrieve job data
         data = database.get_related_people(self.conn, 'company', company_identifier)
 
@@ -360,36 +350,9 @@ class App():
         main_body_top = urwid.LineBox(self.build_related_jobs_for_company_walkable(identifier),
                                       title="Open Jobs", title_align="left")
 
-        # Mid Box - Related People
-        # list_of_people_data_dicts = database.get_related_people(self.conn, "company", identifier)
-        # list_of_people_as_strings = []
-        # for person_dict in list_of_people_data_dicts:
-        #     people_as_text = "person_id: " + str(person_dict["person_id"]) + "   " + \
-        #                    "person_company: " + str(person_dict["person_company"]) + "   " + \
-        #                    "person_email: " + str(person_dict["person_email"]) + "   " + \
-        #                    "person_phone: " + person_dict["person_phone"]
-        #
-        #     list_of_people_as_strings.append(urwid.Text(people_as_text))
-        # main_body_mid = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(list_of_people_as_strings)),
-        #                                  title="People", title_align="left")
         main_body_mid = urwid.LineBox(self.build_related_people_for_company_walkable(identifier),
                                        title="People", title_align="left")
 
-        # Bottom Box - Related Notes
-        # list_of_notes_data_dicts = database.get_related_notes(self.conn, "company", identifier)
-        # list_of_notes_as_strings = []
-        # for note_dict in list_of_notes_data_dicts:
-        #     note_as_text = "note_id: " + str(note_dict["note_id"]) + "   " + \
-        #                    "note_company: " + str(note_dict["note_company"]) + "   " + \
-        #                    "note_person: " + str(note_dict["note_person"]) + "   " + \
-        #                    "note_job: " + str(note_dict["note_job"]) + "   " + \
-        #                    "note_title: " + note_dict["note_title"] + "   " + \
-        #                    "note_date_modified: " + note_dict["note_date_modified"] + "\n" + \
-        #                    "note_details: " + note_dict["note_details"] + "\n"
-        #
-        #     list_of_notes_as_strings.append(urwid.Text(note_as_text))
-        # main_body_bottom = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(list_of_notes_as_strings)),
-        #                                  title="Notes", title_align="left")
         main_body_bottom = self.build_related_note_linebox(table, identifier)
 
         list_of_main_body_widgets = [main_body_top, main_body_mid, main_body_bottom]
@@ -397,29 +360,6 @@ class App():
         return list_of_main_body_widgets
 
     def build_person_main_body(self, table, identifier):
-
-        """
-        editables = ["todo_title", "todo_details"]
-        # This addition makes all items that show up editable by clicking them as buttons
-        data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
-        rows = []
-        for item in data:
-            if str(item) in editables:
-                button = urwid.Button(str(data[item]))
-                item_name = str(item)
-                item_value = str(data[item])
-                item_id = str(data["todo_id"])
-                urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, "todo"])
-                one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
-            else:
-                one_row = urwid.Text(str(item) + ": " + str(data[item]))
-            rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
-
-        return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
-        """
-
-
-
         # Top Box - Person Details
         editables = ["person_company", "person_name", "person_email", "person_phone"]
         data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
@@ -438,24 +378,6 @@ class App():
 
         main_body_top = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(rows)), title="Details", title_align="left")
 
-        # Bottom Box - Related Notes
-        # list_of_notes_data_dicts = database.get_related_notes_by_id(self.conn, "person", identifier)
-
-        # # Turn list of note data into walkable list of strings
-        # list_of_notes_as_strings = []
-        # for note_dict in list_of_notes_data_dicts:
-        #     note_as_text = "note_id: " + str(note_dict["note_id"]) + "   " + \
-        #                    "note_company: " + str(note_dict["note_company"]) + "   " + \
-        #                    "note_person: " + str(note_dict["note_person"]) + "   " + \
-        #                    "note_job: " + str(note_dict["note_job"]) + "   " + \
-        #                    "note_title: " + note_dict["note_title"] + "   " + \
-        #                    "note_date_modified: " + note_dict["note_date_modified"] + "\n" + \
-        #                    "note_details: " + note_dict["note_details"] + "\n"
-        #
-        #     list_of_notes_as_strings.append(urwid.Text(note_as_text))
-        # main_body_bottom = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(list_of_notes_as_strings)),
-        #                                  title="Notes", title_align="left")
-
         main_body_bottom = self.build_related_note_linebox("person", identifier)
         list_of_main_body_widgets = [main_body_top, main_body_bottom]
 
@@ -469,13 +391,6 @@ class App():
         bottom: Notes related to job
         job_id, job_title, job_date_added, job_date_posted, job_description, job_status
         """
-
-        # Retrieve job data
-        # if isinstance(identifier, int):
-        #     data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
-        # else:
-        #     raise ValueError(f"{table, identifier}")
-        #     data = database.get_one_row_from_table_by_name(self.conn, table, identifier)
         data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
 
         text_items = []
@@ -624,6 +539,28 @@ class App():
 
             self.body_container.contents[1] = (main_body, ("weight", 3, False))
 
+    def modify_side_body(self, button, table_name):
+        """Reruns side-bar code to update list"""
+        side_body_item_list = None
+        if table_name == "todo":
+            side_body_item_list = self.build_list_of_todos_for_sidebar()
+
+        elif table_name == "company":
+            side_body_item_list = self.build_list_of_companies_for_sidebar()
+
+        elif table_name == "job":
+            side_body_item_list = self.build_list_of_jobs_for_sidebar()
+
+        elif table_name == "person":
+            side_body_item_list = self.build_list_of_people_for_sidebar()
+
+        # Assings rebuilt item list to the correct part of the body
+        # body_container[0] is the main window
+        # body_container[0][0] is the LineBox of the side bar
+        # body_container[0][0].contents[0] in the new botton in side bar
+        # body_container[0][0][1] is the divider in the side bar
+        # raise ValueError(f"{side_body_item_list=}\n{self.body_container.contents[0][0].original_widget.contents[2]}")
+        self.body_container.contents[0][0].original_widget.contents[2] = (side_body_item_list, ("weight", 1))
 
     def default_body_builder(self, button, choice):
         """Function for directly changing the text in body_container"""
@@ -638,7 +575,12 @@ class App():
 
           # Side Bar - Selectable list of companies
             # Note, buttons need connecting
-            side_bar = urwid.LineBox(self.build_list_of_todos_for_sidebar())
+            new_button = urwid.Button("New Todo")
+            # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["todo"])
+            new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+            linebox_of_todos = self.build_list_of_todos_for_sidebar()
+            side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_todos]))
 
             # Main body - Displays selected Todos
             main_body = urwid.LineBox(urwid.Filler(urwid.Text("Todo items", 'center', 'clip'), "top"),
@@ -776,6 +718,28 @@ class App():
         # raise ValueError(f"the identifier passed was {identifier}")
         self.default_body_builder(button, "person")
         self.modify_main_body(button, "person", identifier)
+
+    def on_create_new_item_click(self, button, table_name_and_related_ids):
+        """ Creates a new item, refreshes the sidebar, and triggers a selection of that item
+        :param button: button that was clicked to create the new item
+        :param table_name_and_related_ids: [table_name, related_company_id, related_person_id, related_job_id]
+        :return: None
+        """
+
+        identifier = database.insert_one_default_item(self.conn, table_name_and_related_ids[0], table_name_and_related_ids[1:])
+        table_name = table_name_and_related_ids[0]
+
+        #related_company_id=None, related_person_id=None, related_job_id=None
+        if table_name == "todo":
+            self.modify_side_body(button, table_name)
+            self.on_todo_item_click(button, identifier)
+        if table_name == "person":
+            self.on_person_item_click(button, identifier)
+        if table_name == "company":
+            self.on_company_item_click(button, identifier)
+        if table_name == "job":
+            self.on_job_item_click(button, identifier)
+
 
     def exit_program(self):
         raise urwid.ExitMainLoop()

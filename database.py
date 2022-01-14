@@ -83,50 +83,153 @@ def create_new_db(conn):
     print("from creator", conn)
     return conn
 
+def insert_one_default_item(conn, table, related_ids = None):
+    company_id = None
+    person_id = None
+    job_id = None
+    tuple_of_item_data = None
 
-def insert_many_table_data(conn, table, list_of_data_to_insert):
-    """Given a connection, a table, and a dict of items, insert data into the table
-        assumes keys in
+    if related_ids:
+        if len(related_ids) == 1:
+            company_id = related_ids[0]
+        elif len(related_ids) == 2:
+            company_id = related_ids[0]
+            person_id = related_ids[1]
+        else:
+            (company_id, person_id, job_id) = related_ids
 
-        This may benefit from a validation method and a more global approach to table column names"""
     if table == "job":
-        """(job_id INTEGER PRIMARY KEY NOT NULL,
+        """
+        job_id INTEGER PRIMARY KEY NOT NULL,
         job_company INTEGER NOT NULL,
         job_title TEXT,
         job_date_added TEXT DEFAULT CURRENT_DATE,
         job_date_modified TEXT DEFAULT CURRENT_DATE,
         job_date_posted TEXT,
         job_description TEXT,
-        job_status TEXT DEFAULT "Interested","""
-        db_data_names = """job_title, job_date_added, job_date_posted, job_description, job_status"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.executemany('''INSERT INTO job
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+        job_status TEXT DEFAULT "Interested"
+        """
+        tuple_of_item_data = (None, company_id, "New Job", None, None, "", "", None)
 
     if table == "company":
-        db_data_names = "company_name"
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.executemany('''INSERT INTO company
-                                  VALUES (?, ?)''', list_of_data_to_insert)
+        """
+        company_id       INTEGER     PRIMARY KEY     NOT NULL,
+        company_name      TEXT    NOT NULL
+        """
+        tuple_of_item_data = (None, "New Company")
 
     if table == "note":
-        db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_modified, note_details"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.executemany('''INSERT INTO note
-                               VALUES (?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+        """
+        note_id           INTEGER     PRIMARY KEY     NOT NULL,
+        note_company      INTEGER,
+        note_person       INTEGER,
+        note_job          INTEGER,
+        note_title        TEXT,
+        note_date_modified  TEXT DEFAULT CURRENT_DATE,
+        note_details      TEXT,
+        """
+        tuple_of_item_data = (None, company_id, person_id, job_id, "New Person", "", "", None)
 
     if table == "person":
-        db_data_names = """person_id, person_company, person_name, person_email, person_phone, person_date_modified"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.executemany('''INSERT INTO person
-                                  VALUES (?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+        """
+        person_id         INTEGER     PRIMARY KEY     NOT NULL,
+        person_company    INTEGER     NOT NULL,
+        person_name       TEXT,
+        person_email      TEXT,
+        person_phone      INTEGER,
+        person_date_modified TEXT DEFAULT CURRENT_DATE
+        """
+        tuple_of_item_data = (None, company_id, "New Person", "", "", None)
 
     if table == "todo":
-        db_data_names = """todo_title, todo_date_modified, todo_details"""
-        table_data_names = db_data_names.split(", ")
-        cursor = conn.executemany('''INSERT INTO todo
-                                  VALUES (?, ?, ?, ?)''', list_of_data_to_insert)
+        """
+        todo_id               INTEGER     PRIMARY KEY NOT NULL,
+        todo_title            TEXT,
+        todo_date_modified    TEXT    DEFAULT CURRENT_DATE,
+        todo_details          TEXT
+        """
+        tuple_of_item_data = (None, "New Todo", None, "")
+
+    if tuple_of_item_data:
+        return insert_one_sepcific_item(conn, table, tuple_of_item_data)
+    else:
+        raise ValueError(f"An issue arose with the table: {table} or related ids: {related_ids}")
+
+def insert_one_sepcific_item(conn, table, tuple_of_item_data):
+    """Given a connection, a table, and a dict of items, insert data into the table
+        :return: rowid of inserted row
+    """
+
+    if table == "job":
+        cursor = conn.execute('''INSERT INTO job
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', tuple_of_item_data)
+
+    if table == "company":
+        cursor = conn.execute('''INSERT INTO company
+                                     VALUES (?, ?)''', tuple_of_item_data)
+
+    if table == "note":
+        cursor = conn.execute('''INSERT INTO note
+                                  VALUES (?, ?, ?, ?, ?, ?, ?)''', tuple_of_item_data)
+
+    if table == "person":
+        cursor = conn.execute('''INSERT INTO person
+                                     VALUES (?, ?, ?, ?, ?, ?)''', tuple_of_item_data)
+
+    if table == "todo":
+        cursor = conn.execute('''INSERT INTO todo
+                                     VALUES (?, ?, ?, ?)''', tuple_of_item_data)
+
+    conn.commit()
+    return cursor.lastrowid
+
+
+def insert_many_table_data(conn, table, list_of_data_for_item):
+    for item in list_of_data_for_item:
+        insert_one_sepcific_item(conn, table, item)
     return conn
+    # """Given a connection, a table, and a dict of items, insert data into the table
+    #     assumes keys in
+    #
+    #     This may benefit from a validation method and a more global approach to table column names"""
+    # if table == "job":
+    #     """(job_id INTEGER PRIMARY KEY NOT NULL,
+    #     job_company INTEGER NOT NULL,
+    #     job_title TEXT,
+    #     job_date_added TEXT DEFAULT CURRENT_DATE,
+    #     job_date_modified TEXT DEFAULT CURRENT_DATE,
+    #     job_date_posted TEXT,
+    #     job_description TEXT,
+    #     job_status TEXT DEFAULT "Interested","""
+    #     db_data_names = """job_title, job_date_added, job_date_posted, job_description, job_status"""
+    #     table_data_names = db_data_names.split(", ")
+    #     cursor = conn.executemany('''INSERT INTO job
+    #                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+    #
+    # if table == "company":
+    #     db_data_names = "company_name"
+    #     table_data_names = db_data_names.split(", ")
+    #     cursor = conn.executemany('''INSERT INTO company
+    #                               VALUES (?, ?)''', list_of_data_to_insert)
+    #
+    # if table == "note":
+    #     db_data_names = """note_id, note_company, note_person, note_job, note_title, note_date_modified, note_details"""
+    #     table_data_names = db_data_names.split(", ")
+    #     cursor = conn.executemany('''INSERT INTO note
+    #                            VALUES (?, ?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+    #
+    # if table == "person":
+    #     db_data_names = """person_id, person_company, person_name, person_email, person_phone, person_date_modified"""
+    #     table_data_names = db_data_names.split(", ")
+    #     cursor = conn.executemany('''INSERT INTO person
+    #                               VALUES (?, ?, ?, ?, ?, ?)''', list_of_data_to_insert)
+    #
+    # if table == "todo":
+    #     db_data_names = """todo_title, todo_date_modified, todo_details"""
+    #     table_data_names = db_data_names.split(", ")
+    #     cursor = conn.executemany('''INSERT INTO todo
+    #                               VALUES (?, ?, ?, ?)''', list_of_data_to_insert)
+    # return conn
 
 
 def insert_test_data_via_objects(conn):
