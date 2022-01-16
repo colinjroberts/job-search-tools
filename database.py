@@ -128,7 +128,7 @@ def insert_one_default_item(conn, table, related_ids = None):
         note_date_modified  TEXT DEFAULT CURRENT_DATE,
         note_details      TEXT,
         """
-        tuple_of_item_data = (None, company_id, person_id, job_id, "New Person", "", "", None)
+        tuple_of_item_data = (None, company_id, person_id, job_id, "New Person", "", "")
 
     if table == "person":
         """

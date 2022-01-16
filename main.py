@@ -170,9 +170,10 @@ class App():
         # Retrieve job data
         data = database.get_related_jobs(self.conn, 'company', company_identifier)
 
+        # Button for creating a new job related to this company
         new_button = urwid.Button("New Job")
-        # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
-        urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["job", company_identifier] )
+        # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+        urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [("job", company_identifier), "job", company_identifier] )
         new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
         rows = [urwid.Columns([('pack', new_button)])]
 
@@ -203,11 +204,17 @@ class App():
         # Retrieve job data
         data = database.get_related_people(self.conn, 'company', company_identifier)
 
-        rows = [urwid.Columns([(10, urwid.Text(('bold', "Person ID"))),
+        new_button = urwid.Button("New Person")
+        # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+        urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [("person", company_identifier), "person", company_identifier] )
+        new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+        rows = [urwid.Columns([('pack', new_button)])]
+
+        rows.append(urwid.Columns([(10, urwid.Text(('bold', "Person ID"))),
                                (18, urwid.Text(('bold', "Phone"))),
                                ('weight', 1, urwid.Text(('bold', "Name"))),
                                ('weight', 1, urwid.Text(('bold', "Email")))
-                               ], dividechars=3, min_width=10)]
+                               ], dividechars=3, min_width=10))
 
         for item in data:
             if item:
@@ -222,6 +229,40 @@ class App():
                 rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
+
+    def build_related_note_linebox(self, table, identifier):
+        # Turn list of note data into walkable list of strings
+        list_of_notes_data_dicts = database.get_related_notes_by_id(self.conn, table, identifier)
+
+        # raise ValueError(f"{list_of_notes_data_dicts=}")
+        editables = ['note_company', 'note_person', 'note_job', 'note_title', 'note_details']
+
+        new_button = urwid.Button("New Note")
+        # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+        if table == "company":
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [(table, identifier), "note", identifier])
+        new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+        rows = [urwid.Columns([('pack', new_button)])]
+
+        for note in list_of_notes_data_dicts:
+            for item in note:
+                if str(item) in editables:
+                    button = urwid.Button(str(note[item]))
+                    item_name = str(item)
+                    item_value = str(note[item])
+                    item_id = str(note["note_id"])
+                    urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, 'note'])
+                    one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
+                else:
+                    one_row = urwid.Text(str(item) + ": " + str(note[item]))
+
+                rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+            rows.append(urwid.Divider("-"))
+
+        related_note_linebox = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(rows)),
+                                         title="Notes", title_align="left")
+
+        return related_note_linebox
 
 
     def build_list_of_jobs_for_sidebar(self):
@@ -302,31 +343,6 @@ class App():
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
-    def build_related_note_linebox(self, table, identifier):
-        # Turn list of note data into walkable list of strings
-        list_of_notes_data_dicts = database.get_related_notes_by_id(self.conn, table, identifier)
-        # raise ValueError(f"{list_of_notes_data_dicts=}")
-        editables = ['note_company', 'note_person', 'note_job', 'note_title', 'note_details']
-        rows = []
-        for note in list_of_notes_data_dicts:
-            for item in note:
-                if str(item) in editables:
-                    button = urwid.Button(str(note[item]))
-                    item_name = str(item)
-                    item_value = str(note[item])
-                    item_id = str(note["note_id"])
-                    urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, 'note'])
-                    one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
-                else:
-                    one_row = urwid.Text(str(item) + ": " + str(note[item]))
-
-                rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
-            rows.append(urwid.Divider("-"))
-
-        related_note_linebox = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(rows)),
-                                         title="Notes", title_align="left")
-
-        return related_note_linebox
 
 
 
@@ -562,7 +578,7 @@ class App():
         elif table_name == "person":
             side_body_item_list = self.build_list_of_people_for_sidebar()
 
-        # Assings rebuilt item list to the correct part of the body
+        # Assigns rebuilt item list to the correct part of the body
         # body_container[0] is the main window
         # body_container[0][0] is the LineBox of the side bar
         # body_container[0][0].contents[0] in the new botton in side bar
@@ -584,8 +600,8 @@ class App():
           # Side Bar - Selectable list of companies
             # Note, buttons need connecting
             new_button = urwid.Button("New Todo")
-            # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
-            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["todo"])
+            # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [("todo", None), "todo"])
             new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
             linebox_of_todos = self.build_list_of_todos_for_sidebar()
             side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_todos]))
@@ -600,8 +616,8 @@ class App():
             # Side Bar - Selectable list of companies
             # Note, buttons need connecting
             new_button = urwid.Button("New Company")
-            # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
-            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["company"])
+            # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [("company", None), "company"])
             new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
             linebox_of_companies = self.build_list_of_companies_for_sidebar()
             side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_companies]))
@@ -732,29 +748,50 @@ class App():
         self.default_body_builder(button, "person")
         self.modify_main_body(button, "person", identifier)
 
-    def on_create_new_item_click(self, button, table_name_and_related_ids):
+    def on_create_new_item_click(self, button, main_table_and_id_data_table_name_and_related_ids):
         """ Creates a new item, refreshes the sidebar, and triggers a selection of that item
+
+        company - just needs to refresh the sidebar
+        job in company - changes view to job rebuilding main window, selecting job
+        person in company - changes view to person rebuilding main window, selecting person
+        note in company - modify main window and put selection back to where it was
+
+
         :param button: button that was clicked to create the new item
         :param table_name_and_related_ids: [table_name, related_company_id, related_person_id, related_job_id]
         :return: None
         """
-
-        identifier = database.insert_one_default_item(self.conn, table_name_and_related_ids[0], table_name_and_related_ids[1:])
-        table_name = table_name_and_related_ids[0]
+        view_table_name = main_table_and_id_data_table_name_and_related_ids[0][0]
+        view_table_identifier = main_table_and_id_data_table_name_and_related_ids[0][1]
+        data_table_name = main_table_and_id_data_table_name_and_related_ids[1]
+        identifier = database.insert_one_default_item(self.conn,
+                                                      main_table_and_id_data_table_name_and_related_ids[1],
+                                                      main_table_and_id_data_table_name_and_related_ids[2:])
 
         #related_company_id=None, related_person_id=None, related_job_id=None
-        if table_name == "todo":
-            self.modify_side_body(button, table_name)
-            self.on_todo_item_click(button, identifier)
-        if table_name == "person":
-            self.modify_side_body(button, table_name)
-            self.on_person_item_click(button, identifier)
-        if table_name == "company":
-            self.modify_side_body(button, table_name)
-            self.on_company_item_click(button, identifier)
-        if table_name == "job":
-            self.modify_side_body(button, table_name)
-            self.on_job_item_click(button, identifier)
+
+
+        # !!! Make it so when adding a new note, it appears instantly in the related note box
+        if data_table_name == "note":
+            # Refresh the main body of the view table
+            self.modify_main_body(button, view_table_name, view_table_identifier)
+
+        else:
+            if view_table_name == "todo":
+                self.on_todo_item_click(button, identifier)
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "person":
+                self.on_person_item_click(button, identifier)
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "company":
+                self.on_company_item_click(button, identifier)
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "job":
+                self.on_job_item_click(button, identifier)
+                self.modify_side_body(button, view_table_name)
 
 
     def exit_program(self):
