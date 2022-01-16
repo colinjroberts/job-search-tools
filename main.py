@@ -88,7 +88,7 @@ class App():
         self.main_pile = urwid.Pile([('pack', tab_menu), self.body_container])
 
         self.view = self.main_pile
-        self.item_selected_for_popup = None
+        self.most_recent_body_focus_position = None
         self.mainloop = urwid.MainLoop(self.view,
                                   palette=[('reversed', 'standout', ''),
                                            ('bold', 'bold', '')],
@@ -100,7 +100,7 @@ class App():
     def close_pop_up_window(self, button):
         """Closes the pop up window"""
         self.mainloop.widget = self.main_pile
-        self.body_container[1].focus_position = self.item_selected_for_popup
+        self.body_container[1].focus_position = self.most_recent_body_focus_position
         # raise ValueError(f"{self.item_selected_for_popup}")
 
     def commit_pop_up_changes(self, button, list_of_name_data_id_table):
@@ -119,7 +119,7 @@ class App():
     def make_pop_up_window(self, button, list_of_things):
         """Returns a simple box window, to be rendered on top of the layout"""
         field_name, edit_field, id, table = list_of_things[0], list_of_things[1], list_of_things[2], list_of_things[3]
-        self.item_selected_for_popup = self.body_container[1].focus_position
+        self.most_recent_body_focus_position = self.body_container[1].focus_position
 
         body = [urwid.Text("item " + id + ": " + field_name)]
         body.append(urwid.Divider())
@@ -241,6 +241,11 @@ class App():
         # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
         if table == "company":
             urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [(table, identifier), "note", identifier])
+        elif table == "person":
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [(table, identifier), "note", None, identifier])
+        elif table == "job":
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [(table, identifier), "note", None, None, identifier])
+
         new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
         rows = [urwid.Columns([('pack', new_button)])]
 
@@ -773,8 +778,10 @@ class App():
 
         # !!! Make it so when adding a new note, it appears instantly in the related note box
         if data_table_name == "note":
+            self.most_recent_body_focus_position = self.body_container[1].focus_position
             # Refresh the main body of the view table
             self.modify_main_body(button, view_table_name, view_table_identifier)
+            self.body_container[1].focus_position = self.most_recent_body_focus_position
 
         else:
             if view_table_name == "todo":
