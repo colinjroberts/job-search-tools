@@ -170,11 +170,19 @@ class App():
         # Retrieve job data
         data = database.get_related_jobs(self.conn, 'company', company_identifier)
 
-        rows = [urwid.Columns([(10, urwid.Text(('bold', "Job ID"))),
+        new_button = urwid.Button("New Job")
+        # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+        urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["job", company_identifier] )
+        new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+        rows = [urwid.Columns([('pack', new_button)])]
+
+        rows.append(urwid.Columns([(10, urwid.Text(('bold', "Job ID"))),
                                (14, urwid.Text(('bold', "Status"))),
                                urwid.Text(('bold', "Job Title")),
                                ('pack', urwid.Text(('bold', "Date Added"))),
-                               ], dividechars=3, min_width=10)]
+                               ], dividechars=3, min_width=10)
+                    )
+
 
         for item in data:
             if item:
@@ -182,9 +190,9 @@ class App():
                 urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
 
                 one_row = urwid.Columns([(10, button),
-                                         (14, urwid.Text(item["job_status"])),
-                                         urwid.Text(item["job_title"]),
-                                         ('pack', urwid.Text(item["job_date_added"])),
+                                         (14, urwid.Text(str(item["job_status"]))),
+                                         urwid.Text(str(item["job_title"])),
+                                         ('pack', urwid.Text(str(item["job_date_added"]))),
                                         ], dividechars=3, min_width=10)
                 rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
