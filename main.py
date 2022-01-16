@@ -73,11 +73,11 @@ class App():
         # database.initialize_db(self.conn)
 
         # Build primary two subdivisions: tab_menu and body_container
-        tab_menu = self.build_tab_menu(['Todos', 'Jobs', 'Companies', 'People'])
+        tab_menu = self.build_tab_menu(['Todos', 'Companies', 'Jobs', 'People'])
         self.tab_name_table_name_map = {
             'Todos': "todo",
-            'Jobs': "job",
             'Companies': "company",
+            'Jobs': "job",
             'People': "person",
         }
         # body_container = urwid.Filler(urwid.Text("default", 'left', 'clip'), "top")
@@ -597,8 +597,6 @@ class App():
             new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
             linebox_of_companies = self.build_list_of_companies_for_sidebar()
             side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_companies]))
-
-            # side_bar = urwid.LineBox(self.build_list_of_companies_for_sidebar())
 
             # Main body top - Open Jobs at selected company
             main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
