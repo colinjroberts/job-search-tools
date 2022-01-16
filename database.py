@@ -103,8 +103,8 @@ def insert_one_default_item(conn, table, related_ids = None):
         job_id INTEGER PRIMARY KEY NOT NULL,
         job_company INTEGER NOT NULL,
         job_title TEXT,
-        job_date_added TEXT DEFAULT CURRENT_DATE,
-        job_date_modified TEXT DEFAULT CURRENT_DATE,
+        job_date_added TEXT DEFAULT DATETIME('now','localtime'),
+        job_date_modified TEXT DEFAULT DATETIME('now','localtime'),
         job_date_posted TEXT,
         job_description TEXT,
         job_status TEXT DEFAULT "Interested"
@@ -538,7 +538,8 @@ def get_related_notes(conn, related_table, related_identifier):
 
     cursor = conn.execute(f"SELECT * FROM note "
                           f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
-                          f"WHERE {name_column} == (?)", [related_identifier])
+                          f"WHERE {name_column} == (?)"
+                          f"ORDER BY note_date_modified DESC", [related_identifier])
 
     # Extract data from query cursor
     list_of_notes = []
@@ -705,9 +706,13 @@ def insert_table_data(conn, table, dict_of_data_to_insert):
 
 
 def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
+    # raise ValueError(f"{table=}, {row_id=}, {field_name=}, {field_data=}")
     int_fields = ['job_company', 'person_company', 'note_company', 'note_person', 'note_job']
-    if field_name in int_fields:
-        field_data = int(field_data)
+    if field_data:
+        if field_name in int_fields:
+            field_data = int(field_data)
+        else:
+            field_data = str(field_data)
 
     if table == "todo":
         date_field = "todo_date_modified"

@@ -100,26 +100,40 @@ class App():
     def close_pop_up_window(self, button):
         """Closes the pop up window"""
         self.mainloop.widget = self.main_pile
+        # raise ValueError(f"{self.body_container[1].focus_position=}\n{self.most_recent_body_focus_position=}")
         self.body_container[1].focus_position = self.most_recent_body_focus_position
-        # raise ValueError(f"{self.item_selected_for_popup}")
 
-    def commit_pop_up_changes(self, button, list_of_name_data_id_table):
-        """Updates the data in the field"""
-        # raise ValueError(f"{list_of_name_data_id_table=}")
+
+    def commit_pop_up_changes(self, button, list_of_viewname_tablename_data_id_table):
+        """Updates the data in the field
+
+        :list_of_viewname_tablename_data_id_table[view_name, field_name, edited_text, id, table]
+        """
         database.update_value_by_id_fieldname(self.conn,
-                                              list_of_name_data_id_table[3],
-                                              list_of_name_data_id_table[2],
-                                              list_of_name_data_id_table[0],
-                                              list_of_name_data_id_table[1].edit_text,
+                                              list_of_viewname_tablename_data_id_table[4],
+                                              list_of_viewname_tablename_data_id_table[3],
+                                              list_of_viewname_tablename_data_id_table[1],
+                                              list_of_viewname_tablename_data_id_table[2].edit_text,
                                               )
-        self.modify_side_body(button, list_of_name_data_id_table[3])
-        self.modify_main_body(button, list_of_name_data_id_table[3], identifier=list_of_name_data_id_table[2])
+
+        self.modify_side_body(button, list_of_viewname_tablename_data_id_table[0][0])
+        # raise ValueError(f"{list_of_viewname_tablename_data_id_table=}")
+        self.modify_main_body(button, list_of_viewname_tablename_data_id_table[0][0],
+                              identifier=list_of_viewname_tablename_data_id_table[0][1])
+
         self.close_pop_up_window(button)
 
     def make_pop_up_window(self, button, list_of_things):
         """Returns a simple box window, to be rendered on top of the layout"""
-        field_name, edit_field, id, table = list_of_things[0], list_of_things[1], list_of_things[2], list_of_things[3]
+        # raise ValueError(f"{list_of_things=}")
+        view_name, view_id, field_name, edit_field, id, table = list_of_things[0][0],  list_of_things[0][1],\
+                                                       list_of_things[1], \
+                                                       list_of_things[2], \
+                                                       list_of_things[3], \
+                                                       list_of_things[4]
+
         self.most_recent_body_focus_position = self.body_container[1].focus_position
+        # raise ValueError(f"{self.body_container[1][1].focus_position=}\n{self.most_recent_body_focus_position=}")
 
         body = [urwid.Text("item " + id + ": " + field_name)]
         body.append(urwid.Divider())
@@ -128,7 +142,7 @@ class App():
         body.append(urwid.Divider())
 
         save_button = urwid.Button('Save')
-        urwid.connect_signal(save_button, 'click', self.commit_pop_up_changes, [field_name, edited_text, id, table])
+        urwid.connect_signal(save_button, 'click', self.commit_pop_up_changes, [(view_name,view_id), field_name, edited_text, id, table])
 
         cancel_button = urwid.Button('Cancel')
         urwid.connect_signal(cancel_button, 'click', self.close_pop_up_window)
@@ -256,7 +270,7 @@ class App():
                     item_name = str(item)
                     item_value = str(note[item])
                     item_id = str(note["note_id"])
-                    urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, 'note'])
+                    urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, 'note'])
                     one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
                 else:
                     one_row = urwid.Text(str(item) + ": " + str(note[item]))
@@ -366,7 +380,7 @@ class App():
                 item_name = str(item)
                 item_value = str(data[item])
                 item_id = str(data["todo_id"])
-                urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, table])
+                urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, table])
                 one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
@@ -399,7 +413,7 @@ class App():
                 item_name = str(item)
                 item_value = str(data[item])
                 item_id = str(data["person_id"])
-                urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, table])
+                urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, table])
                 one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
@@ -444,7 +458,7 @@ class App():
                 item_name = str(item)
                 item_value = str(data[item])
                 item_id = str(data["job_id"])
-                urwid.connect_signal(button, 'click', self.make_pop_up_window, [item_name, item_value, item_id, table])
+                urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, table])
                 one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
@@ -571,25 +585,33 @@ class App():
     def modify_side_body(self, button, table_name):
         """Reruns side-bar code to update list"""
         side_body_item_list = None
+
+        # Assigns rebuilt item list to the correct part of the body
         if table_name == "todo":
-            side_body_item_list = self.build_list_of_todos_for_sidebar()
+            new_button = urwid.Button("New Todo")
+            # on_create_new_item_click [requires (view_table_name, view_table_identifier), data_table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, [("todo", None), "todo"])
+            new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+            linebox_of_todos = self.build_list_of_todos_for_sidebar()
+            side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_todos]))
+            self.body_container.contents[0] = (side_bar, ("weight", 1, False))
 
         elif table_name == "company":
             side_body_item_list = self.build_list_of_companies_for_sidebar()
+            # body_container[0] is the main window
+            # body_container[0][0] is the LineBox of the side bar
+            # body_container[0][0].contents[0] in the new button in side bar
+            # body_container[0][0][1] is the divider in the side bar
+            self.body_container.contents[0][0].original_widget.contents[2] = (side_body_item_list, ("weight", 1))
 
         elif table_name == "job":
-            side_body_item_list = self.build_list_of_jobs_for_sidebar()
+            side_body_item_list = urwid.LineBox(self.build_list_of_jobs_for_sidebar())
+            self.body_container.contents[0] = (side_body_item_list, ("weight", 1, False))
 
         elif table_name == "person":
-            side_body_item_list = self.build_list_of_people_for_sidebar()
+            side_body_item_list = urwid.LineBox(self.build_list_of_people_for_sidebar())
+            self.body_container.contents[0] = (side_body_item_list, ("weight", 1, False))
 
-        # Assigns rebuilt item list to the correct part of the body
-        # body_container[0] is the main window
-        # body_container[0][0] is the LineBox of the side bar
-        # body_container[0][0].contents[0] in the new botton in side bar
-        # body_container[0][0][1] is the divider in the side bar
-        # raise ValueError(f"{side_body_item_list=}\n{self.body_container.contents[0][0].original_widget.contents[2]}")
-        self.body_container.contents[0][0].original_widget.contents[2] = (side_body_item_list, ("weight", 1))
 
     def default_body_builder(self, button, choice):
         """Function for directly changing the text in body_container"""
@@ -748,6 +770,7 @@ class App():
         # raise ValueError(f"the identifier passed was {identifier}")
         self.default_body_builder(button, "job")
         self.modify_main_body(button, "job", identifier)
+        self.modify_side_body(button, "job")
 
     def on_related_company_person_click(self, button, identifier):
         """Callback function for when clicking on a person on the companies tab
