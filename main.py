@@ -591,7 +591,14 @@ class App():
         elif choice == "company":
             # Side Bar - Selectable list of companies
             # Note, buttons need connecting
-            side_bar = urwid.LineBox(self.build_list_of_companies_for_sidebar())
+            new_button = urwid.Button("New Company")
+            # on_create_new_item_click [requires table_name, related_company_id=None, related_person_id=None, related_job_id=None]
+            urwid.connect_signal(new_button, 'click', self.on_create_new_item_click, ["company"])
+            new_button = urwid.AttrMap(new_button, None, focus_map='reversed')
+            linebox_of_companies = self.build_list_of_companies_for_sidebar()
+            side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_companies]))
+
+            # side_bar = urwid.LineBox(self.build_list_of_companies_for_sidebar())
 
             # Main body top - Open Jobs at selected company
             main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
@@ -734,10 +741,13 @@ class App():
             self.modify_side_body(button, table_name)
             self.on_todo_item_click(button, identifier)
         if table_name == "person":
+            self.modify_side_body(button, table_name)
             self.on_person_item_click(button, identifier)
         if table_name == "company":
+            self.modify_side_body(button, table_name)
             self.on_company_item_click(button, identifier)
         if table_name == "job":
+            self.modify_side_body(button, table_name)
             self.on_job_item_click(button, identifier)
 
 
