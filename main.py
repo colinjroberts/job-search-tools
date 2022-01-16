@@ -153,7 +153,7 @@ class App():
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.GridFlow(cells, 20, 2, 1, "left")
 
-    def build_job_status_button_gridflow(self):
+    def build_job_status_button_gridflow(self, job_identifier):
         """Defines and builds tab_menu using provided choices
         Probably doesn't need to be this convoluted.
         """
@@ -161,7 +161,7 @@ class App():
         cells = []
         for item in choices:
             button = urwid.Button(item)
-            # urwid.connect_signal(button, 'click', self.on_tab_click, item)
+            urwid.connect_signal(button, 'click', self.on_job_status_click, job_identifier)
             cells.append(urwid.AttrMap(button, None, focus_map='reversed'))
         return urwid.GridFlow(cells, 16, 1, 0, "left")
 
@@ -427,7 +427,7 @@ class App():
             text_items.append(str(item) + ": " + str(data[item]))
 
         # Top Box - Job Status
-        status_content = urwid.Pile([urwid.Text(f"Status: {data['job_status']}"), self.build_job_status_button_gridflow()])
+        status_content = urwid.Pile([urwid.Text(f"Status: {data['job_status']}"), self.build_job_status_button_gridflow(identifier)])
         main_body_top = urwid.LineBox(urwid.Filler(status_content, "top"),
                                       title="Status", title_align="left")
 
@@ -523,15 +523,15 @@ class App():
             # Layout for if no job is selected
             if not identifier:
                 # Top Box - Job Status
-                main_body_top = urwid.LineBox(urwid.Filler(self.build_job_status_button_gridflow(), "top"),
+                main_body_top = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                               title="Status", title_align="left")
 
                 # Mid Box - Details about the posting
-                main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                               title="Posting Details", title_align="left")
 
                 # Bottom Box - Notes about the posting
-                main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+                main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                                  title="Notes", title_align="left")
 
                 list_of_main_body_widgets = [main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)]
@@ -665,15 +665,15 @@ class App():
             side_bar = urwid.LineBox(self.build_list_of_jobs_for_sidebar())
             # raise ValueError(f"{side_bar=}")
             # Top Box - Job Status
-            main_body_top = urwid.LineBox(urwid.Filler(self.build_job_status_button_gridflow(), "top"),
+            main_body_top = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                           title="Status", title_align="left")
 
             # Mid Box - Details about the posting
-            main_body_mid = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+            main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                           title="Posting Details", title_align="left")
 
             # Bottom Box - Notes about the posting
-            main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
+            main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Text(''), "top"),
                                              title="Notes", title_align="left")
 
             main_body = urwid.Pile([main_body_top, ("weight", 3, main_body_mid), ("weight", 3, main_body_bottom)])
@@ -707,6 +707,16 @@ class App():
         :param choice: user variable used for switch
         :return: None. For now, this just calls the body_picker function which directly changes
         """
+        self.modify_main_body(button, "job", identifier)
+
+    def on_job_status_click(self, button, identifier):
+        """Callback function for changing job_status
+        :param button: calling button
+        :param identifier: jobid
+        :return: None.
+        """
+        # def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
+        database.update_value_by_id_fieldname(self.conn, "job", identifier, 'job_status', button.get_label())
         self.modify_main_body(button, "job", identifier)
 
     def on_company_item_click(self, button, identifier):

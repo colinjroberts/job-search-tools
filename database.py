@@ -41,7 +41,7 @@ def create_new_db(conn):
               job_date_modified TEXT DEFAULT CURRENT_DATE,
               job_date_posted TEXT,
               job_description TEXT,
-              job_status TEXT DEFAULT "Interested",
+              job_status TEXT DEFAULT 'Interested',
               FOREIGN KEY (job_company) REFERENCES company (company_id)
              );''')
 
@@ -109,7 +109,7 @@ def insert_one_default_item(conn, table, related_ids = None):
         job_description TEXT,
         job_status TEXT DEFAULT "Interested"
         """
-        tuple_of_item_data = (None, company_id, "New Job", None, None, "", "", None)
+        tuple_of_item_data = (None, company_id, "New Job", None, None, "", "", "Interested")
 
     if table == "company":
         """
@@ -705,7 +705,6 @@ def insert_table_data(conn, table, dict_of_data_to_insert):
 
 
 def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
-
     int_fields = ['job_company', 'person_company', 'note_company', 'note_person', 'note_job']
     if field_name in int_fields:
         field_data = int(field_data)
