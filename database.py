@@ -163,6 +163,10 @@ def insert_one_sepcific_item(conn, table, tuple_of_item_data):
     if table == "job":
         cursor = conn.execute('''INSERT INTO job
                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', tuple_of_item_data)
+        id = cursor.lastrowid
+        cursor = conn.execute(f"""UPDATE job
+                                  SET job_date_added = DATETIME('now','localtime')
+                                  WHERE job_id = {id}""")
 
     if table == "company":
         cursor = conn.execute('''INSERT INTO company
@@ -580,7 +584,9 @@ def get_related_notes_by_id(conn, related_table, related_identifier):
 
     cursor = conn.execute(f"SELECT note.* FROM note "
                           f"INNER JOIN {related_table} ON {related_table}.{id_column} == note.{note_join_column} "
-                          f"WHERE {id_column} == (?)", [related_identifier])
+                          f"WHERE {id_column} == (?) "
+                          f"ORDER BY note_date_modified DESC"
+                          , [related_identifier])
 
     # Extract data from query cursor
     list_of_notes = []
