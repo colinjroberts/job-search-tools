@@ -342,7 +342,6 @@ class App():
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
-
     def build_list_of_todos_for_sidebar(self):
         """Defines and builds sidebar used on Todos view with list of todos
         Clicking on one should show that company's information.
@@ -362,8 +361,29 @@ class App():
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
+    def build_company_description_walkable(self, table, identifier):
+        """Defines and builds main_body used on Todos view based on selected sidebar item Identifier
 
+        todo_id, todo_title, todo_date_modified, todo_description
+        """
+        editables = ["company_name", "company_description"]
+        # This addition makes all items that show up editable by clicking them as buttons
+        data = database.get_one_row_from_table_by_id(self.conn, table, identifier)
+        rows = []
+        for item in data:
+            if str(item) in editables:
+                button = urwid.Button(str(data[item]))
+                item_name = str(item)
+                item_value = str(data[item])
+                item_id = str(data["company_id"])
+                urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, table])
+                one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
+            else:
+                one_row = urwid.Text(str(item) + ": " + str(data[item]))
+            rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
+        return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
+        pass
 
     def build_todo_main_body(self, table, identifier=None):
         """Defines and builds main_body used on Todos view based on selected sidebar item Identifier
@@ -390,15 +410,18 @@ class App():
 
     def build_company_main_body(self, table, identifier=None):
         # Top Box - Open Jobs
-        main_body_top = urwid.LineBox(self.build_related_jobs_for_company_walkable(identifier),
+        main_body_top = urwid.LineBox(self.build_company_description_walkable(table, identifier),
+                                      title="Company Details", title_align="left")
+
+        main_body_mid_upper = urwid.LineBox(self.build_related_jobs_for_company_walkable(identifier),
                                       title="Open Jobs", title_align="left")
 
-        main_body_mid = urwid.LineBox(self.build_related_people_for_company_walkable(identifier),
+        main_body_mid_lower = urwid.LineBox(self.build_related_people_for_company_walkable(identifier),
                                        title="People", title_align="left")
 
         main_body_bottom = self.build_related_note_linebox(table, identifier)
 
-        list_of_main_body_widgets = [main_body_top, main_body_mid, main_body_bottom]
+        list_of_main_body_widgets = [main_body_top, main_body_mid_upper, main_body_mid_lower, main_body_bottom]
 
         return list_of_main_body_widgets
 
@@ -649,19 +672,22 @@ class App():
             linebox_of_companies = self.build_list_of_companies_for_sidebar()
             side_bar = urwid.LineBox(urwid.Pile([("pack",new_button), ('pack', urwid.Divider(" ")), linebox_of_companies]))
 
+            main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Choose or create a company.", 'center', 'clip'), "top"),
+                                                title="Company Details", title_align="left")
+
             # Main body top - Open Jobs at selected company
-            main_body_top = urwid.LineBox(urwid.Filler(urwid.Text("Open Jobs", 'center', 'clip'), "top"),
+            main_body_mid_upper = urwid.LineBox(urwid.Filler(urwid.Text("", 'center', 'clip'), "top"),
                                           title="Open Jobs", title_align="left")
 
             # Main body middle - People known at selected company
-            main_body_mid = urwid.LineBox(urwid.Filler(urwid.Text("People", 'center', 'clip'), "top"),
+            main_body_mid_lower = urwid.LineBox(urwid.Filler(urwid.Text("", 'center', 'clip'), "top"),
                                           title="People", title_align="left")
 
             # Main body bottom - Notes about selected company
             main_body_bottom = urwid.LineBox(urwid.Filler(urwid.Edit(), "top"),
                                           title="Notes", title_align="left")
 
-            main_body = urwid.Pile([main_body_top, main_body_mid, main_body_bottom])
+            main_body = urwid.Pile([main_body_top, main_body_mid_upper, main_body_mid_lower, main_body_bottom])
 
             list_of_widgets_to_return = [(side_bar, ("weight", 1, False)), (main_body, ("weight", 3, False))]
 

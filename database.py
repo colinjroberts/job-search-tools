@@ -25,8 +25,9 @@ def create_new_db(conn):
     # Create Company table with
     # id, name
     conn.execute('''CREATE TABLE IF NOT EXISTS company
-             (company_id       INTEGER     PRIMARY KEY     NOT NULL,
-              company_name      TEXT    NOT NULL
+             (company_id          INTEGER     PRIMARY KEY     NOT NULL,
+              company_name        TEXT    NOT NULL,
+              company_description TEXT
              );
              ''')
 
@@ -113,10 +114,12 @@ def insert_one_default_item(conn, table, related_ids = None):
 
     if table == "company":
         """
-        company_id       INTEGER     PRIMARY KEY     NOT NULL,
-        company_name      TEXT    NOT NULL
+        company_id          INTEGER     PRIMARY KEY     NOT NULL,
+        company_name        TEXT    NOT NULL,
+        company_description TEXT
+
         """
-        tuple_of_item_data = (None, "New Company")
+        tuple_of_item_data = (None, "New Company", None)
 
     if table == "note":
         """
@@ -170,7 +173,7 @@ def insert_one_sepcific_item(conn, table, tuple_of_item_data):
 
     if table == "company":
         cursor = conn.execute('''INSERT INTO company
-                                     VALUES (?, ?)''', tuple_of_item_data)
+                                     VALUES (?, ?, ?)''', tuple_of_item_data)
 
     if table == "note":
         cursor = conn.execute('''INSERT INTO note
@@ -252,13 +255,13 @@ def insert_test_data_via_objects(conn):
 
     # Insert test data into company table
     list_of_data_to_insert = [
-        (None, "Albacore"),
-        (None, "BuyNLarge"),
-        (None, "Caltech"),
-        (None, "Dennys"),
-        (None, "Enron"),
-        (None, "Facebook"),
-        (None, "Google"),
+        (None, "Albacore", "Makes software for fish"),
+        (None, "BuyNLarge", "Slushies, Robots, and Spacecraft"),
+        (None, "Caltech", "Makes nerds for the future"),
+        (None, "Dennys", "Breakfast that doesn't break, fast"),
+        (None, "Enron", "Makes mistakes"),
+        (None, "Facebook", "Makes software that breaks fast and causes problems"),
+        (None, "Google", "Makes lots of things, but few survive"),
     ]
     insert_many_table_data(conn, "company", list_of_data_to_insert)
 
@@ -355,7 +358,8 @@ def get_company_data(conn, company_id):
                           """, company_id)
     company_data = {}
     company_data_names = ['company_id',
-                          'company_name'
+                          'company_name',
+                          'company_description'
                           ]
 
     for i, cursor_row in enumerate(cursor):
@@ -748,10 +752,9 @@ def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
                                       {date_field} = DATETIME('now','localtime')
                                   WHERE note_id = {row_id}""", [field_data])
 
-
     if table == "company":
         cursor = conn.execute(f"""UPDATE company
-                                  SET {field_name} = ?,
+                                  SET {field_name} = ?
                                   WHERE company_id = {row_id}""", [field_data])
 
     conn.commit()
