@@ -180,9 +180,13 @@ class App():
         return urwid.GridFlow(cells, 16, 1, 0, "left")
 
     def build_related_jobs_for_company_walkable(self, company_identifier):
-        """Builds a table of job_title, date_added, and job_status for a given selected company"""
+        """Builds a table of job_title, date_added, and job_status for a given selected company,
+        sorted by custom job status order"""
         # Retrieve job data
         data = database.get_related_jobs(self.conn, 'company', company_identifier)
+
+        # Sort jobs by the following order
+        job_status_orders = ["Interested", "Applied", "Interviewing", 'Accepted', "Interviewed", "Rejected"]
 
         # Button for creating a new job related to this company
         new_button = urwid.Button("New Job")
@@ -198,18 +202,18 @@ class App():
                                ], dividechars=3, min_width=10)
                     )
 
+        for status in job_status_orders:
+            for item in data:
+                if item and item['job_status'] == status:
+                    button = urwid.Button(str(item["job_id"]))
+                    urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
 
-        for item in data:
-            if item:
-                button = urwid.Button(str(item["job_id"]))
-                urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
-
-                one_row = urwid.Columns([(10, button),
-                                         (14, urwid.Text(str(item["job_status"]))),
-                                         urwid.Text(str(item["job_title"])),
-                                         ('pack', urwid.Text(str(item["job_date_added"]))),
-                                        ], dividechars=3, min_width=10)
-                rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+                    one_row = urwid.Columns([(10, button),
+                                             (14, urwid.Text(str(item["job_status"]))),
+                                             urwid.Text(str(item["job_title"])),
+                                             ('pack', urwid.Text(str(item["job_date_added"]))),
+                                            ], dividechars=3, min_width=10)
+                    rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
@@ -294,7 +298,7 @@ class App():
         rows = [urwid.Columns([(10, urwid.Text(('bold', "Job ID"))), urwid.Text(('bold', "Job Title"))], dividechars=1)]
 
         for item in job_data:
-            if item:
+            if item and item['job_status'] != 'Rejected':
                 button = urwid.Button(str(item["job_id"]))
                 urwid.connect_signal(button, 'click', self.on_job_item_click, item["job_id"])
                 one_row = urwid.Columns([(10, button), urwid.Text(item["job_title"]),
