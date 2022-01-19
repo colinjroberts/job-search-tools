@@ -760,6 +760,126 @@ def update_value_by_id_fieldname(conn, table, row_id, field_name, field_data):
     conn.commit()
     return conn
 
+def remove_one_item(conn, field_data):
+    """Deletes one item from the DB, by row_id"""
+    table = field_data[0]
+    row_id = field_data[1]
+
+    # Before deleting, check for related items and delete them if this item is its only
+    # connection
+    if table == "job":
+        # Job may have notes
+        # Find all notes for this job that have another ID and set person ID to null
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_job = {row_id} and 
+                              note_company is NOT NULL OR
+                              note_person is NOT NULL
+                              """)
+
+        # Loop through and update the job_id on each note to null
+        for cursor_row in cursor:
+            update_value_by_id_fieldname(conn, 'note', cursor_row[0], 'note_job', None)
+
+        # Find all notes where job is this one and company and person are blank
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_job = {row_id} and 
+                              note_company IS NULL and 
+                              note_person IS NULL
+                              """)
+
+        # Loop through and delete the notes
+        for cursor_row in cursor:
+            conn.execute(f"""DELETE FROM note
+                             WHERE note_id == {cursor_row[0]}""")
+
+    if table == "person":
+        # Person may have notes
+
+        # Find all notes for this person that have another ID and set person ID to null
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_person = {row_id} and 
+                              note_company is NOT NULL OR
+                              note_job is NOT NULL
+                              """)
+
+        # Loop through and update the person_id to null
+        for cursor_row in cursor:
+            update_value_by_id_fieldname(conn, 'note', cursor_row[0], 'note_person', None)
+
+        # Find all notes where person is this one and company and job are blank
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_person = {row_id} and 
+                              note_company IS NULL and 
+                              note_job IS NULL
+                              """)
+
+        # Loop through and delete the notes
+        for cursor_row in cursor:
+            conn.execute(f"""DELETE FROM note
+                             WHERE note_id == {cursor_row[0]}""")
+
+    if table == "company":
+        # Company may have note, job, or person
+
+        # NOTES
+        # Find all notes for this person that have another ID and set person ID to null
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_company = {row_id} and 
+                              note_person is NOT NULL OR
+                              note_job is NOT NULL
+                              """)
+
+        # Loop through and update the person_id to null
+        for cursor_row in cursor:
+            update_value_by_id_fieldname(conn, 'note', cursor_row[0], 'note_company', None)
+
+        # Find all notes where person is this one and company and job are blank
+        cursor = conn.execute(f"""SELECT note_id FROM note
+                              WHERE note_company = {row_id} and 
+                              note_person IS NULL and 
+                              note_job IS NULL
+                              """)
+
+        # Loop through and delete the notes
+        for cursor_row in cursor:
+            conn.execute(f"""DELETE FROM note
+                             WHERE note_id == {cursor_row[0]}""")
+
+
+        # PERSON
+        # Find all notes for this person that have another ID and set person ID to null
+        cursor = conn.execute(f"""SELECT person_id FROM person
+                              WHERE person_company = {row_id}
+                              """)
+
+        # Loop through and delete all people
+        for cursor_row in cursor:
+            remove_one_item(conn, ['person', cursor_row[0]])
+
+        # JOBS
+        cursor = conn.execute(f"""SELECT job_id FROM job
+                              WHERE job_company = {row_id} 
+                              """)
+
+        # Loop through and delete all the jobs
+        for cursor_row in cursor:
+            remove_one_item(conn, ['job', cursor_row[0]])
+
+
+    if table == "note":
+        # Notes have no dependencies
+        pass
+
+    if table == "todo":
+        # Todos have no dependencies
+        pass
+
+    cursor = conn.execute(f"""DELETE FROM {table}
+                              WHERE {table}_id = {row_id}""")
+
+    conn.commit()
+    return conn
+
 def open_db():
     """Opens DB, initializing if needed, and inserts test data"""
     if not path.exists(DB_PATH):
