@@ -180,9 +180,13 @@ class App():
         return urwid.GridFlow(cells, 16, 1, 0, "left")
 
     def build_related_jobs_for_company_walkable(self, company_identifier):
-        """Builds a table of job_title, date_added, and job_status for a given selected company"""
+        """Builds a table of job_title, date_added, and job_status for a given selected company,
+        sorted by custom job status order"""
         # Retrieve job data
         data = database.get_related_jobs(self.conn, 'company', company_identifier)
+
+        # Sort jobs by the following order
+        job_status_orders = ["Interested", "Applied", "Interviewing", 'Accepted', "Interviewed", "Rejected"]
 
         # Button for creating a new job related to this company
         new_button = urwid.Button("New Job")
@@ -198,18 +202,18 @@ class App():
                                ], dividechars=3, min_width=10)
                     )
 
+        for status in job_status_orders:
+            for item in data:
+                if item and item['job_status'] == status:
+                    button = urwid.Button(str(item["job_id"]))
+                    urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
 
-        for item in data:
-            if item:
-                button = urwid.Button(str(item["job_id"]))
-                urwid.connect_signal(button, 'click', self.on_related_company_job_click, item["job_id"])
-
-                one_row = urwid.Columns([(10, button),
-                                         (14, urwid.Text(str(item["job_status"]))),
-                                         urwid.Text(str(item["job_title"])),
-                                         ('pack', urwid.Text(str(item["job_date_added"]))),
-                                        ], dividechars=3, min_width=10)
-                rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+                    one_row = urwid.Columns([(10, button),
+                                             (14, urwid.Text(str(item["job_status"]))),
+                                             urwid.Text(str(item["job_title"])),
+                                             ('pack', urwid.Text(str(item["job_date_added"]))),
+                                            ], dividechars=3, min_width=10)
+                    rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
@@ -294,7 +298,7 @@ class App():
         rows = [urwid.Columns([(10, urwid.Text(('bold', "Job ID"))), urwid.Text(('bold', "Job Title"))], dividechars=1)]
 
         for item in job_data:
-            if item:
+            if item and item['job_status'] != 'Rejected':
                 button = urwid.Button(str(item["job_id"]))
                 urwid.connect_signal(button, 'click', self.on_job_item_click, item["job_id"])
                 one_row = urwid.Columns([(10, button), urwid.Text(item["job_title"]),
@@ -372,15 +376,22 @@ class App():
         rows = []
         for item in data:
             if str(item) in editables:
-                button = urwid.Button(str(data[item]))
+                button = urwid.Button(str(item))
                 item_name = str(item)
                 item_value = str(data[item])
                 item_id = str(data["company_id"])
                 urwid.connect_signal(button, 'click', self.make_pop_up_window, [(table, identifier), item_name, item_value, item_id, table])
-                one_row = urwid.Columns([('pack', urwid.Text(str(item) + ": ")), button], dividechars=1)
+                one_row = urwid.Columns([(24, button), urwid.Text(": " + str(item_value))], dividechars=1)
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
             rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        # delete button
+        delete_button = urwid.Button("Delete Company")
+        urwid.connect_signal(delete_button, 'click', self.on_delete_item,
+                             [(table, identifier), data["company_name"], data["company_description"], data["company_id"], "company"])
+        rows.append(urwid.AttrMap(delete_button, None, focus_map='reversed'))
+
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
         pass
@@ -405,6 +416,13 @@ class App():
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
             rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        # Delete Button
+        delete_button = urwid.Button("Delete Todo")
+        urwid.connect_signal(delete_button, 'click', self.on_delete_item,
+                             [(table, identifier), data["todo_title"], data["todo_details"], data["todo_id"], "todo"])
+        rows.append(urwid.AttrMap(delete_button, None, focus_map='reversed'))
+
 
         return urwid.ListBox(urwid.SimpleFocusListWalker(rows))
 
@@ -441,6 +459,13 @@ class App():
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
             rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        # delete button
+        delete_button = urwid.Button("Delete Person")
+        urwid.connect_signal(delete_button, 'click', self.on_delete_item,
+                             [(table, identifier), data["person_name"], data["person_email"], data["person_id"], "person"])
+        rows.append(urwid.AttrMap(delete_button, None, focus_map='reversed'))
+
 
         main_body_top = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(rows)), title="Details", title_align="left")
 
@@ -486,6 +511,13 @@ class App():
             else:
                 one_row = urwid.Text(str(item) + ": " + str(data[item]))
             rows.append(urwid.AttrMap(one_row, None, focus_map='reversed'))
+
+        # delete button
+        delete_button = urwid.Button("Delete Job")
+        urwid.connect_signal(delete_button, 'click', self.on_delete_item,
+                             [(table, identifier), data["job_title"], data["job_description"], data["job_id"], "job"])
+        rows.append(urwid.AttrMap(delete_button, None, focus_map='reversed'))
+
 
         main_body_mid = urwid.LineBox(urwid.ListBox(urwid.SimpleFocusListWalker(rows)),
                       title="Posting Details", title_align="left")
@@ -595,7 +627,7 @@ class App():
                                                  title="Notes", title_align="left")
                 main_body = urwid.Pile([main_body_top, main_body_bottom])
 
-                list_of_widgets_to_return = [main_body_top, main_body_bottom]
+                list_of_main_body_widgets = [main_body_top, main_body_bottom]
 
             # Modify existing layout when a job is selected
             if identifier:
@@ -832,9 +864,6 @@ class App():
                                                       main_table_and_id_data_table_name_and_related_ids[1],
                                                       main_table_and_id_data_table_name_and_related_ids[2:])
 
-        #related_company_id=None, related_person_id=None, related_job_id=None
-
-
         # !!! Make it so when adding a new note, it appears instantly in the related note box
         if data_table_name == "note":
             self.most_recent_body_focus_position = self.body_container[1].focus_position
@@ -857,6 +886,43 @@ class App():
 
             if view_table_name == "job":
                 self.on_job_item_click(button, identifier)
+                self.modify_side_body(button, view_table_name)
+
+    def on_delete_item(self, button, main_table_and_id_data_table_name_and_related_ids):
+        """Deletes selected item and refreshes side bar and main view
+
+        For now, both sidebar and main get refreshed, so selection gets wiped out
+
+        :param button: button that was clicked to create the new item
+        :param table_name_and_related_ids: [(table, identifier), item_name, item_value, item_id, item_table])
+
+        :return: None
+        """
+        view_table_name = main_table_and_id_data_table_name_and_related_ids[0][0]
+        view_table_identifier = main_table_and_id_data_table_name_and_related_ids[0][1]
+        data_table_name = main_table_and_id_data_table_name_and_related_ids[4]
+        data_id = main_table_and_id_data_table_name_and_related_ids[3]
+        # raise ValueError(f"{data_table_name}, {data_id}")
+        database.remove_one_item(self.conn, [data_table_name, data_id])
+
+        self.modify_main_body(button, view_table_name)
+
+        if data_table_name == "note":
+            self.most_recent_body_focus_position = self.body_container[1].focus_position
+            # Refresh the main body of the view table
+            self.body_container[1].focus_position = self.most_recent_body_focus_position
+
+        else:
+            if view_table_name == "todo":
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "person":
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "company":
+                self.modify_side_body(button, view_table_name)
+
+            if view_table_name == "job":
                 self.modify_side_body(button, view_table_name)
 
 

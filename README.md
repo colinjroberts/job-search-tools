@@ -25,30 +25,10 @@ Tools for organizing and performing a job search
 
 ## TODO:
 - Milestone: Build manual version of E2E 1
-  - Fix committing pop up changes for notes because the ID being passed goes to update sidebar and mainbody window which is not what needs to be updated
   - Fix default entries for database to avoid None errors in related companies and stuff
-  - Implement "new item" buttons on sidebars
-    - Todo
-    - Company
-    - Job
-    - Person  
-  - Implement changing tabs when a main body related item is selected
-    - Job -> Notes
-    - Company -> Job
-    - Company -> Note
-    - Company -> People
-    - People -> Notes
-  - Implement data modification (database writes for changing existing information)
-    - Todo
-    - Company
-    - Job
-    - Person
-  - Implement item deletion to be found in main window
-    - Todo
-    - Company
-    - Job
-    - Person
-    
+  - Add try catch for database writes to avoid catastrophic sqlite3.IntegrityError: FOREIGN KEY constraint failed errors.
   - Implement save/export option to write data out to text files
-  - Implement 
+  - On delete, have popup that says how many items will end up being deleted
+  - Refactor to dedupe build methods, on_etc buttons
+  - Refactor perhaps making each view into a class that has its own properties?
 - Milestone: Build job scraper
