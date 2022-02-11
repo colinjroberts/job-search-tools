@@ -132,3 +132,6 @@ dmypy.json
 .idea/
 image-examples/
 data/
+
+# Mac
+.DS_Store
