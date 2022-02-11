@@ -37,20 +37,21 @@ spreadsheet:
 
 ### Adding a Todo
 Todos can be added and deleted without affecting other objects
+![](repo-images/job-search-tools-new-todo.gif)
+
 
 ### Adding a Company
 A company is the first thing that needs to be added. From the new company, one
 can add jobs and people.
+![](repo-images/job-search-tools-new-company.gif)
 
 ### Adding a Job
 Jobs can be accessed from the Jobs tab or by selecting a job from a company.
+![](repo-images/job-search-tools-new-job.gif)
 
 ### Adding a Person
 People can be accessed from the People tab or by selecting a job from a company.
-
-
-### Adding Notes
-
+![](repo-images/job-search-tools-new-person.gif)
 
 ### Deleting
 This tool cascades deletes. Deleting an object will delete that object and all 
