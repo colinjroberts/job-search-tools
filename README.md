@@ -1,5 +1,5 @@
-# job-search-tools
-A terminal-based UI for organizing information related to a job search
+# Job Search Tools - Tracking In-Terminal
+A terminal-based tool for organizing information related to a job search.
 
 ![](repo-images/job-search-tools-overview.gif)
 
